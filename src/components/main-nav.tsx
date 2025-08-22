@@ -33,7 +33,7 @@ export function MainNav({ user, tools }: MainNavProps) {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <Link href="/" passHref legacyBehavior>
+        <Link href="/" passHref>
           <SidebarMenuButton asChild isActive={pathname === "/"}>
             <LayoutDashboard />
             <span>Dashboard</span>
@@ -46,7 +46,7 @@ export function MainNav({ user, tools }: MainNavProps) {
           <SidebarGroupLabel>Tools</SidebarGroupLabel>
           {enabledTools.map((tool) => (
             <SidebarMenuItem key={tool.id}>
-              <Link href={`/tool/${tool.id}`} passHref legacyBehavior>
+              <Link href={`/tool/${tool.id}`} passHref>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === `/tool/${tool.id}`}
@@ -65,7 +65,7 @@ export function MainNav({ user, tools }: MainNavProps) {
       <SidebarGroup>
         <SidebarGroupLabel>Settings</SidebarGroupLabel>
         <SidebarMenuItem>
-          <Link href="/profile" passHref legacyBehavior>
+          <Link href="/profile" passHref>
             <SidebarMenuButton asChild isActive={pathname === "/profile"}>
               <UserIcon />
               <span>Profile</span>
@@ -75,7 +75,7 @@ export function MainNav({ user, tools }: MainNavProps) {
 
         {hasAdminAccess && (
           <SidebarMenuItem>
-            <Link href="/manage-tools" passHref legacyBehavior>
+            <Link href="/manage-tools" passHref>
               <SidebarMenuButton asChild isActive={pathname === "/manage-tools"}>
                 <Wrench />
                 <span>Manage Tools</span>
@@ -86,7 +86,7 @@ export function MainNav({ user, tools }: MainNavProps) {
 
         {user.role === "Superadmin" && (
           <SidebarMenuItem>
-            <Link href="/audit-log" passHref legacyBehavior>
+            <Link href="/audit-log" passHref>
               <SidebarMenuButton
                 asChild
                 isActive={pathname.startsWith("/audit-log")}

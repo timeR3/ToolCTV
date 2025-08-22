@@ -1,3 +1,4 @@
+'use server';
 // This file acts as a mock in-memory database.
 import type { Tool, LogEntry, User } from "@/types";
 import { Wrench, ShieldCheck, GitBranch, FileClock } from "lucide-react";
