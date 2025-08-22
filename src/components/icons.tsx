@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   User,
   Settings,
+  Shapes,
 } from "lucide-react";
 
 export const Icons = {
@@ -17,6 +18,7 @@ export const Icons = {
   LayoutDashboard,
   User,
   Settings,
+  Shapes,
 };
 
 type IconName = keyof typeof Icons;

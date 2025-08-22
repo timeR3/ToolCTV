@@ -7,6 +7,7 @@ import {
   Wrench,
   FileClock,
   User as UserIcon,
+  Shapes,
 } from "lucide-react";
 
 import {
@@ -82,14 +83,24 @@ export function MainNav({ user, tools }: MainNavProps) {
         </SidebarMenuItem>
 
         {hasAdminAccess && (
-          <SidebarMenuItem>
-            <Link href="/manage-tools">
-              <SidebarMenuButton isActive={pathname === "/manage-tools"}>
-                <Wrench />
-                <span>Manage Tools</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
+          <>
+            <SidebarMenuItem>
+              <Link href="/manage-tools">
+                <SidebarMenuButton isActive={pathname === "/manage-tools"}>
+                  <Wrench />
+                  <span>Manage Tools</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/manage-categories">
+                <SidebarMenuButton isActive={pathname === "/manage-categories"}>
+                  <Shapes />
+                  <span>Manage Categories</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          </>
         )}
 
         {user.role === "Superadmin" && (

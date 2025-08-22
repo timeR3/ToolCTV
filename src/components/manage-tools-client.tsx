@@ -33,8 +33,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { addTool, deleteTool, getTools, updateTool } from "@/lib/data";
-import type { Tool, User } from "@/types";
+import { addTool, deleteTool, getCategories, getTools, updateTool } from "@/lib/data";
+import type { Tool, User, Category } from "@/types";
 import { Loader2, Pencil, PlusCircle, Trash2, Wrench } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -44,10 +44,9 @@ interface ManageToolsClientProps {
     user: User;
 }
 
-const toolCategories = ["Finanzas", "Marketing", "Diseño", "Proyectos", "Contabilidad", "IT"];
-
 export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps) {
   const [tools, setTools] = useState<Tool[]>(initialTools);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -56,8 +55,16 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
   const [toolToDelete, setToolToDelete] = useState<Tool | null>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+        const fetchedCategories = await getCategories();
+        setCategories(fetchedCategories);
+    }
+    fetchCategories();
+  }, []);
+
   const handleNewTool = () => {
-    setCurrentTool({ category: toolCategories[0] });
+    setCurrentTool({ category: categories[0]?.name || "General" });
     setIsDialogOpen(true);
   };
 
@@ -103,7 +110,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             url: currentTool.url || "",
             icon: currentTool.icon || "Wrench",
             enabled: currentTool.enabled ?? false,
-            category: currentTool.category || toolCategories[0],
+            category: currentTool.category || (categories[0]?.name || "General"),
         }, user);
         setTools([newTool, ...tools]);
         toast({ title: "Success", description: "Tool added successfully." });
@@ -192,9 +199,9 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
                     <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
-                    {toolCategories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                        {cat}
+                    {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
                         </SelectItem>
                     ))}
                     </SelectContent>

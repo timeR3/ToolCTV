@@ -1,6 +1,6 @@
 'use server';
 // This file acts as a mock in-memory database.
-import type { Tool, LogEntry, User } from "@/types";
+import type { Tool, LogEntry, User, Category } from "@/types";
 import { Wrench, ShieldCheck, GitBranch, FileClock } from "lucide-react";
 
 let tools: Tool[] = [
@@ -40,6 +40,15 @@ let tools: Tool[] = [
     enabled: true,
     category: "Contabilidad",
   },
+];
+
+let categories: Category[] = [
+    { id: "cat1", name: "Finanzas" },
+    { id: "cat2", name: "Marketing" },
+    { id: "cat3", name: "Diseño" },
+    { id: "cat4", name: "Proyectos" },
+    { id: "cat5", name: "Contabilidad" },
+    { id: "cat6", name: "IT" },
 ];
 
 let logs: LogEntry[] = [];
@@ -105,4 +114,41 @@ const diff = (obj1: any, obj2: any) => {
     }
     return result;
   }, {} as any);
+}
+
+// Categories
+export const getCategories = async () => {
+    await sleep(100);
+    return [...categories];
+}
+
+export const addCategory = async (category: Omit<Category, 'id'>, user: User) => {
+    await sleep(100);
+    const newCategory: Category = { ...category, id: `cat${Date.now()}` };
+    categories.push(newCategory);
+    logAction(user, `Created category: ${newCategory.name}`, `ID: ${newCategory.id}`);
+    return newCategory;
+}
+
+export const updateCategory = async (updatedCategory: Category, user: User) => {
+    await sleep(100);
+    const index = categories.findIndex(c => c.id === updatedCategory.id);
+    if (index !== -1) {
+        const oldCategory = categories[index];
+        categories[index] = updatedCategory;
+        logAction(user, `Updated category: ${updatedCategory.name}`, `Changes: ${JSON.stringify(diff(oldCategory, updatedCategory))}`);
+        return updatedCategory;
+    }
+    return null;
+}
+
+export const deleteCategory = async (categoryId: string, user: User) => {
+    await sleep(100);
+    const categoryToDelete = categories.find(c => c.id === categoryId);
+    if (categoryToDelete) {
+        categories = categories.filter(c => c.id !== categoryId);
+        // Optional: Also update tools that used this category
+        tools = tools.map(t => t.category === categoryToDelete.name ? { ...t, category: 'General' } : t);
+        logAction(user, `Deleted category: ${categoryToDelete.name}`, `ID: ${categoryId}`);
+    }
 }

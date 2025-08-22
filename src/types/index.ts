@@ -25,3 +25,8 @@ export interface LogEntry {
   action: string;
   details: string;
 }
+
+export interface Category {
+  id: string;
+  name: string;
+}
