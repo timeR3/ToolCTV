@@ -33,12 +33,10 @@ export function MainNav({ user, tools }: MainNavProps) {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <Link href="/" passHref>
-          <SidebarMenuButton asChild isActive={pathname === "/"}>
-            <>
-              <LayoutDashboard />
-              <span>Dashboard</span>
-            </>
+        <Link href="/">
+          <SidebarMenuButton isActive={pathname === "/"}>
+            <LayoutDashboard />
+            <span>Dashboard</span>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
@@ -48,15 +46,12 @@ export function MainNav({ user, tools }: MainNavProps) {
           <SidebarGroupLabel>Tools</SidebarGroupLabel>
           {enabledTools.map((tool) => (
             <SidebarMenuItem key={tool.id}>
-              <Link href={`/tool/${tool.id}`} passHref>
+              <Link href={`/tool/${tool.id}`}>
                 <SidebarMenuButton
-                  asChild
                   isActive={pathname === `/tool/${tool.id}`}
                 >
-                  <>
-                    <DynamicIcon name={tool.icon} />
-                    <span>{tool.name}</span>
-                  </>
+                  <DynamicIcon name={tool.icon} />
+                  <span>{tool.name}</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
@@ -69,24 +64,20 @@ export function MainNav({ user, tools }: MainNavProps) {
       <SidebarGroup>
         <SidebarGroupLabel>Settings</SidebarGroupLabel>
         <SidebarMenuItem>
-          <Link href="/profile" passHref>
-            <SidebarMenuButton asChild isActive={pathname === "/profile"}>
-              <>
-                <UserIcon />
-                <span>Profile</span>
-              </>
+          <Link href="/profile">
+            <SidebarMenuButton isActive={pathname === "/profile"}>
+              <UserIcon />
+              <span>Profile</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
 
         {hasAdminAccess && (
           <SidebarMenuItem>
-            <Link href="/manage-tools" passHref>
-              <SidebarMenuButton asChild isActive={pathname === "/manage-tools"}>
-                <>
-                  <Wrench />
-                  <span>Manage Tools</span>
-                </>
+            <Link href="/manage-tools">
+              <SidebarMenuButton isActive={pathname === "/manage-tools"}>
+                <Wrench />
+                <span>Manage Tools</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -94,15 +85,12 @@ export function MainNav({ user, tools }: MainNavProps) {
 
         {user.role === "Superadmin" && (
           <SidebarMenuItem>
-            <Link href="/audit-log" passHref>
+            <Link href="/audit-log">
               <SidebarMenuButton
-                asChild
                 isActive={pathname.startsWith("/audit-log")}
               >
-                <>
-                  <FileClock />
-                  <span>Audit Log</span>
-                </>
+                <FileClock />
+                <span>Audit Log</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
