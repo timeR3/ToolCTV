@@ -37,11 +37,14 @@ import { addTool, deleteTool, getTools, updateTool } from "@/lib/data";
 import type { Tool, User } from "@/types";
 import { Loader2, Pencil, PlusCircle, Trash2, Wrench } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface ManageToolsClientProps {
     initialTools: Tool[];
     user: User;
 }
+
+const toolCategories = ["Finanzas", "Marketing", "Diseño", "Proyectos", "Contabilidad", "IT"];
 
 export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps) {
   const [tools, setTools] = useState<Tool[]>(initialTools);
@@ -54,7 +57,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
   const { toast } = useToast();
 
   const handleNewTool = () => {
-    setCurrentTool({});
+    setCurrentTool({ category: toolCategories[0] });
     setIsDialogOpen(true);
   };
 
@@ -99,7 +102,8 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             description: currentTool.description || "",
             url: currentTool.url || "",
             icon: currentTool.icon || "Wrench",
-            enabled: currentTool.enabled ?? false
+            enabled: currentTool.enabled ?? false,
+            category: currentTool.category || toolCategories[0],
         }, user);
         setTools([newTool, ...tools]);
         toast({ title: "Success", description: "Tool added successfully." });
@@ -124,6 +128,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -132,6 +137,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             {tools.map((tool) => (
               <TableRow key={tool.id}>
                 <TableCell className="font-medium">{tool.name}</TableCell>
+                <TableCell>{tool.category}</TableCell>
                 <TableCell>{tool.enabled ? "Enabled" : "Disabled"}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="icon" onClick={() => handleEditTool(tool)}>
@@ -171,6 +177,26 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="icon" className="text-right">Icon</Label>
               <Input id="icon" value={currentTool.icon || ""} onChange={(e) => setCurrentTool({...currentTool, icon: e.target.value })} className="col-span-3" placeholder="A lucide-react icon name"/>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="category" className="text-right">
+                    Category
+                </Label>
+                <Select
+                    value={currentTool.category}
+                    onValueChange={(value) => setCurrentTool({ ...currentTool, category: value })}
+                >
+                    <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {toolCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                        {cat}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="enabled" className="text-right">Enabled</Label>

@@ -9,12 +9,13 @@ export interface User {
 }
 
 export interface Tool {
-  id: string;
+  id:string;
   name: string;
   description: string;
   url: string;
   icon: string; // lucide-react icon name
   enabled: boolean;
+  category: string;
 }
 
 export interface LogEntry {

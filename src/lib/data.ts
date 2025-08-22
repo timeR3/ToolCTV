@@ -11,6 +11,7 @@ let tools: Tool[] = [
     url: "https://trello.com",
     icon: "Wrench",
     enabled: true,
+    category: "Proyectos",
   },
   {
     id: "t2",
@@ -19,6 +20,7 @@ let tools: Tool[] = [
     url: "https://www.ssllabs.com/ssltest/",
     icon: "ShieldCheck",
     enabled: true,
+    category: "IT",
   },
   {
     id: "t3",
@@ -27,6 +29,7 @@ let tools: Tool[] = [
     url: "https://github.com",
     icon: "GitBranch",
     enabled: false,
+    category: "IT",
   },
   {
     id: "t4",
@@ -35,6 +38,7 @@ let tools: Tool[] = [
     url: "https://toggl.com/track/timer/",
     icon: "FileClock",
     enabled: true,
+    category: "Contabilidad",
   },
 ];
 

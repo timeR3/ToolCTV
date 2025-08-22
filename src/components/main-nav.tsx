@@ -30,6 +30,15 @@ export function MainNav({ user, tools }: MainNavProps) {
   const enabledTools = tools.filter((tool) => tool.enabled);
   const hasAdminAccess = user.role === "Admin" || user.role === "Superadmin";
 
+  const toolsByCategory = enabledTools.reduce((acc, tool) => {
+    const category = tool.category || "General";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(tool);
+    return acc;
+  }, {} as Record<string, Tool[]>);
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -41,10 +50,10 @@ export function MainNav({ user, tools }: MainNavProps) {
         </Link>
       </SidebarMenuItem>
 
-      {enabledTools.length > 0 && (
-        <SidebarGroup>
-          <SidebarGroupLabel>Tools</SidebarGroupLabel>
-          {enabledTools.map((tool) => (
+      {Object.entries(toolsByCategory).map(([category, tools]) => (
+        <SidebarGroup key={category}>
+          <SidebarGroupLabel>{category}</SidebarGroupLabel>
+          {tools.map((tool) => (
             <SidebarMenuItem key={tool.id}>
               <Link href={`/tool/${tool.id}`}>
                 <SidebarMenuButton
@@ -57,7 +66,7 @@ export function MainNav({ user, tools }: MainNavProps) {
             </SidebarMenuItem>
           ))}
         </SidebarGroup>
-      )}
+      ))}
 
       <SidebarSeparator />
 
