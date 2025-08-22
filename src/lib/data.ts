@@ -174,3 +174,16 @@ export const getUsers = async (): Promise<User[]> => {
     await sleep(100);
     return [...users];
 }
+
+export const assignToolsToUser = async (userId: string, toolIds: string[], admin: User) => {
+    await sleep(100);
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+        const user = users[userIndex];
+        const oldTools = user.assignedTools;
+        user.assignedTools = toolIds;
+        logAction(admin, `Assigned tools to ${user.name}`, `From [${oldTools.join(', ')}] to [${toolIds.join(', ')}]`);
+        return user;
+    }
+    return null;
+}

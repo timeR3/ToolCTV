@@ -8,6 +8,8 @@ import {
   User,
   Settings,
   Shapes,
+  Users,
+  UserCheck,
 } from "lucide-react";
 
 export const Icons = {
@@ -19,6 +21,8 @@ export const Icons = {
   User,
   Settings,
   Shapes,
+  Users,
+  UserCheck,
 };
 
 type IconName = keyof typeof Icons;

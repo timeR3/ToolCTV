@@ -9,6 +9,7 @@ import {
   User as UserIcon,
   Shapes,
   Users,
+  UserCheck,
 } from "lucide-react";
 
 import {
@@ -29,10 +30,14 @@ interface MainNavProps {
 
 export function MainNav({ user, tools }: MainNavProps) {
   const pathname = usePathname();
-  const enabledTools = tools.filter((tool) => tool.enabled);
+  
+  const userTools = tools.filter(tool => 
+    user.role === 'Admin' || user.role === 'Superadmin' || (user.assignedTools && user.assignedTools.includes(tool.id))
+  ).filter(tool => tool.enabled);
+  
   const hasAdminAccess = user.role === "Admin" || user.role === "Superadmin";
 
-  const toolsByCategory = enabledTools.reduce((acc, tool) => {
+  const toolsByCategory = userTools.reduce((acc, tool) => {
     const category = tool.category || "General";
     if (!acc[category]) {
       acc[category] = [];
@@ -43,29 +48,29 @@ export function MainNav({ user, tools }: MainNavProps) {
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
-        <Link href="/">
+      <Link href="/">
+        <SidebarMenuItem>
           <SidebarMenuButton isActive={pathname === "/"}>
             <LayoutDashboard />
             <span>Dashboard</span>
           </SidebarMenuButton>
-        </Link>
-      </SidebarMenuItem>
+        </SidebarMenuItem>
+      </Link>
 
-      {Object.entries(toolsByCategory).map(([category, tools]) => (
+      {Object.entries(toolsByCategory).map(([category, categoryTools]) => (
         <SidebarGroup key={category}>
           <SidebarGroupLabel>{category}</SidebarGroupLabel>
-          {tools.map((tool) => (
-            <SidebarMenuItem key={tool.id}>
-              <Link href={`/tool/${tool.id}`}>
+          {categoryTools.map((tool) => (
+             <Link href={`/tool/${tool.id}`} key={tool.id}>
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={pathname === `/tool/${tool.id}`}
                 >
                   <DynamicIcon name={tool.icon} />
                   <span>{tool.name}</span>
                 </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
+              </SidebarMenuItem>
+            </Link>
           ))}
         </SidebarGroup>
       ))}
@@ -74,56 +79,64 @@ export function MainNav({ user, tools }: MainNavProps) {
 
       <SidebarGroup>
         <SidebarGroupLabel>Settings</SidebarGroupLabel>
-        <SidebarMenuItem>
-          <Link href="/profile">
+        <Link href="/profile">
+          <SidebarMenuItem>
             <SidebarMenuButton isActive={pathname === "/profile"}>
               <UserIcon />
               <span>Profile</span>
             </SidebarMenuButton>
-          </Link>
-        </SidebarMenuItem>
+          </SidebarMenuItem>
+        </Link>
 
         {hasAdminAccess && (
           <>
-            <SidebarMenuItem>
-              <Link href="/manage-tools">
+            <Link href="/manage-tools">
+              <SidebarMenuItem>
                 <SidebarMenuButton isActive={pathname === "/manage-tools"}>
                   <Wrench />
                   <span>Manage Tools</span>
                 </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/manage-categories">
+              </SidebarMenuItem>
+            </Link>
+            <Link href="/manage-categories">
+              <SidebarMenuItem>
                 <SidebarMenuButton isActive={pathname === "/manage-categories"}>
                   <Shapes />
                   <span>Manage Categories</span>
                 </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
+              </SidebarMenuItem>
+            </Link>
           </>
         )}
 
         {user.role === "Superadmin" && (
           <>
-            <SidebarMenuItem>
-              <Link href="/manage-users">
+             <Link href="/manage-users">
+              <SidebarMenuItem>
                 <SidebarMenuButton isActive={pathname === "/manage-users"}>
                   <Users />
                   <span>Manage Users</span>
                 </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/audit-log">
+              </SidebarMenuItem>
+            </Link>
+             <Link href="/assign-tools">
+                <SidebarMenuItem>
+                    <SidebarMenuButton isActive={pathname === "/assign-tools"}>
+                        <UserCheck />
+                        <span>Assign Tools</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+             </Link>
+            <Link href="/audit-log">
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={pathname.startsWith("/audit-log")}
                 >
                   <FileClock />
                   <span>Audit Log</span>
                 </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
+              </SidebarMenuItem>
+            </Link>
           </>
         )}
       </SidebarGroup>

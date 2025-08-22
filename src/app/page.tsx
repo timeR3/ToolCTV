@@ -8,8 +8,15 @@ import { ArrowRight } from "lucide-react";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-  const tools = await getTools();
-  const enabledTools = tools.filter(t => t.enabled);
+  const allTools = await getTools();
+  
+  const enabledTools = allTools.filter(t => t.enabled);
+
+  const userTools = enabledTools.filter(tool => 
+    user.role === 'Admin' || 
+    user.role === 'Superadmin' || 
+    (user.assignedTools && user.assignedTools.includes(tool.id))
+  );
 
   return (
     <div>
@@ -29,11 +36,11 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Enabled Tools</CardTitle>
+            <CardTitle>Available Tools</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold font-headline">{enabledTools.length}</p>
-            <p className="text-muted-foreground">Tools currently available for use.</p>
+            <p className="text-4xl font-bold font-headline">{userTools.length}</p>
+            <p className="text-muted-foreground">Tools currently available for you.</p>
           </CardContent>
         </Card>
         <Card>
@@ -42,8 +49,8 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             <p className="text-muted-foreground">Ready to dive in? Pick a tool and start working.</p>
-            <Link href={`/tool/${enabledTools[0]?.id || ''}`}>
-                <Button className="w-full" disabled={!enabledTools.length}>
+            <Link href={`/tool/${userTools[0]?.id || ''}`}>
+                <Button className="w-full" disabled={!userTools.length}>
                     Go to first tool <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </Link>
