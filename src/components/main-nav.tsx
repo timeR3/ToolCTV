@@ -35,8 +35,10 @@ export function MainNav({ user, tools }: MainNavProps) {
       <SidebarMenuItem>
         <Link href="/" passHref>
           <SidebarMenuButton asChild isActive={pathname === "/"}>
-            <LayoutDashboard />
-            <span>Dashboard</span>
+            <>
+              <LayoutDashboard />
+              <span>Dashboard</span>
+            </>
           </SidebarMenuButton>
         </Link>
       </SidebarMenuItem>
@@ -51,8 +53,10 @@ export function MainNav({ user, tools }: MainNavProps) {
                   asChild
                   isActive={pathname === `/tool/${tool.id}`}
                 >
-                  <DynamicIcon name={tool.icon} />
-                  <span>{tool.name}</span>
+                  <>
+                    <DynamicIcon name={tool.icon} />
+                    <span>{tool.name}</span>
+                  </>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
@@ -67,8 +71,10 @@ export function MainNav({ user, tools }: MainNavProps) {
         <SidebarMenuItem>
           <Link href="/profile" passHref>
             <SidebarMenuButton asChild isActive={pathname === "/profile"}>
-              <UserIcon />
-              <span>Profile</span>
+              <>
+                <UserIcon />
+                <span>Profile</span>
+              </>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
@@ -77,8 +83,10 @@ export function MainNav({ user, tools }: MainNavProps) {
           <SidebarMenuItem>
             <Link href="/manage-tools" passHref>
               <SidebarMenuButton asChild isActive={pathname === "/manage-tools"}>
-                <Wrench />
-                <span>Manage Tools</span>
+                <>
+                  <Wrench />
+                  <span>Manage Tools</span>
+                </>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -91,8 +99,10 @@ export function MainNav({ user, tools }: MainNavProps) {
                 asChild
                 isActive={pathname.startsWith("/audit-log")}
               >
-                <FileClock />
-                <span>Audit Log</span>
+                <>
+                  <FileClock />
+                  <span>Audit Log</span>
+                </>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
