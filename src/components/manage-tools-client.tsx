@@ -128,6 +128,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -137,6 +138,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             {tools.map((tool) => (
               <TableRow key={tool.id}>
                 <TableCell className="font-medium">{tool.name}</TableCell>
+                <TableCell className="text-muted-foreground max-w-xs truncate">{tool.description}</TableCell>
                 <TableCell>{tool.category}</TableCell>
                 <TableCell>{tool.enabled ? "Enabled" : "Disabled"}</TableCell>
                 <TableCell className="text-right">
