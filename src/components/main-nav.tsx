@@ -8,6 +8,7 @@ import {
   FileClock,
   User as UserIcon,
   Shapes,
+  Users,
 } from "lucide-react";
 
 import {
@@ -104,16 +105,26 @@ export function MainNav({ user, tools }: MainNavProps) {
         )}
 
         {user.role === "Superadmin" && (
-          <SidebarMenuItem>
-            <Link href="/audit-log">
-              <SidebarMenuButton
-                isActive={pathname.startsWith("/audit-log")}
-              >
-                <FileClock />
-                <span>Audit Log</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
+          <>
+            <SidebarMenuItem>
+              <Link href="/manage-users">
+                <SidebarMenuButton isActive={pathname === "/manage-users"}>
+                  <Users />
+                  <span>Manage Users</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <Link href="/audit-log">
+                <SidebarMenuButton
+                  isActive={pathname.startsWith("/audit-log")}
+                >
+                  <FileClock />
+                  <span>Audit Log</span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          </>
         )}
       </SidebarGroup>
     </SidebarMenu>

@@ -1,7 +1,12 @@
 'use server';
 // This file acts as a mock in-memory database.
 import type { Tool, LogEntry, User, Category } from "@/types";
-import { Wrench, ShieldCheck, GitBranch, FileClock } from "lucide-react";
+
+let users: User[] = [
+    { id: 'user-1', name: 'Admin User', email: 'admin@toolbox.pro', avatar: 'https://placehold.co/100x100.png', role: 'Superadmin', assignedTools: [] },
+    { id: 'user-2', name: 'Jane Doe', email: 'jane.doe@example.com', avatar: 'https://placehold.co/100x100.png', role: 'Admin', assignedTools: [] },
+    { id: 'user-3', name: 'John Smith', email: 'john.smith@example.com', avatar: 'https://placehold.co/100x100.png', role: 'User', assignedTools: [] },
+]
 
 let tools: Tool[] = [
   {
@@ -130,6 +135,18 @@ export const addCategory = async (category: Omit<Category, 'id'>, user: User) =>
     return newCategory;
 }
 
+export const updateUserRole = async (userId: string, role: User['role'], admin: User) => {
+    await sleep(100);
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+        const oldRole = users[userIndex].role;
+        users[userIndex].role = role;
+        logAction(admin, `Updated user role: ${users[userIndex].name}`, `Role changed from ${oldRole} to ${role}`);
+        return users[userIndex];
+    }
+    return null;
+}
+
 export const updateCategory = async (updatedCategory: Category, user: User) => {
     await sleep(100);
     const index = categories.findIndex(c => c.id === updatedCategory.id);
@@ -151,4 +168,9 @@ export const deleteCategory = async (categoryId: string, user: User) => {
         tools = tools.map(t => t.category === categoryToDelete.name ? { ...t, category: 'General' } : t);
         logAction(user, `Deleted category: ${categoryToDelete.name}`, `ID: ${categoryId}`);
     }
+}
+
+export const getUsers = async (): Promise<User[]> => {
+    await sleep(100);
+    return [...users];
 }

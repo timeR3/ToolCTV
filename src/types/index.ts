@@ -6,6 +6,7 @@ export interface User {
   email: string;
   avatar: string;
   role: Role;
+  assignedTools: string[]; // Array of tool IDs
 }
 
 export interface Tool {
