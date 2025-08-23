@@ -9,7 +9,6 @@ import {
   User as UserIcon,
   Shapes,
   Users,
-  UserCheck,
 } from "lucide-react";
 
 import {
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { DynamicIcon } from "@/components/icons";
 import type { Tool, User } from "@/types";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 interface MainNavProps {
   user: User;
@@ -66,7 +66,14 @@ export function MainNav({ user, tools }: MainNavProps) {
                 <SidebarMenuButton
                   isActive={pathname === `/tool/${tool.id}`}
                 >
-                  <DynamicIcon name={tool.icon} />
+                  <Avatar className="h-5 w-5 rounded-sm">
+                    {tool.iconUrl ? (
+                      <AvatarImage src={tool.iconUrl} alt={tool.name} className="object-contain" />
+                    ) : null}
+                    <AvatarFallback className="rounded-sm bg-transparent">
+                      <DynamicIcon name={tool.icon} className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
                   <span>{tool.name}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

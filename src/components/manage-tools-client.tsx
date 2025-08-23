@@ -38,6 +38,8 @@ import type { Tool, User, Category } from "@/types";
 import { Loader2, Pencil, PlusCircle, Trash2, Wrench } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { DynamicIcon } from "./icons";
 
 interface ManageToolsClientProps {
     initialTools: Tool[];
@@ -109,6 +111,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             description: currentTool.description || "",
             url: currentTool.url || "",
             icon: currentTool.icon || "Wrench",
+            iconUrl: currentTool.iconUrl,
             enabled: currentTool.enabled ?? false,
             category: currentTool.category || (categories[0]?.name || "General"),
         }, user);
@@ -134,6 +137,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Icon</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
@@ -144,6 +148,16 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
           <TableBody>
             {tools.map((tool) => (
               <TableRow key={tool.id}>
+                <TableCell>
+                  <Avatar className="h-8 w-8 rounded-md">
+                    {tool.iconUrl ? (
+                      <AvatarImage src={tool.iconUrl} alt={tool.name} className="object-contain" />
+                    ) : null}
+                    <AvatarFallback className="rounded-md bg-transparent">
+                      <DynamicIcon name={tool.icon} className="h-5 w-5 text-muted-foreground" />
+                    </AvatarFallback>
+                  </Avatar>
+                </TableCell>
                 <TableCell className="font-medium">{tool.name}</TableCell>
                 <TableCell className="text-muted-foreground max-w-xs truncate">{tool.description}</TableCell>
                 <TableCell>{tool.category}</TableCell>
@@ -184,8 +198,12 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
               <Input id="url" value={currentTool.url || ""} onChange={(e) => setCurrentTool({...currentTool, url: e.target.value })} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="icon" className="text-right">Icon</Label>
+              <Label htmlFor="icon" className="text-right">Icon Name</Label>
               <Input id="icon" value={currentTool.icon || ""} onChange={(e) => setCurrentTool({...currentTool, icon: e.target.value })} className="col-span-3" placeholder="A lucide-react icon name"/>
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="iconUrl" className="text-right">Icon URL</Label>
+              <Input id="iconUrl" value={currentTool.iconUrl || ""} onChange={(e) => setCurrentTool({...currentTool, iconUrl: e.target.value })} className="col-span-3" placeholder="URL for a custom icon"/>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">

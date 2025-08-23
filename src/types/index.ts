@@ -15,6 +15,7 @@ export interface Tool {
   description: string;
   url: string;
   icon: string; // lucide-react icon name
+  iconUrl?: string; // URL for a custom icon image
   enabled: boolean;
   category: string;
 }
