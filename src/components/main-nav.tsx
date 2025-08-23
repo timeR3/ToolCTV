@@ -20,8 +20,10 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { DynamicIcon } from "@/components/icons";
-import type { Tool, User } from "@/types";
+import type { Category, Tool, User } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { getCategories } from "@/lib/data";
+import { useEffect, useState } from "react";
 
 interface MainNavProps {
   user: User;
@@ -30,6 +32,15 @@ interface MainNavProps {
 
 export function MainNav({ user, tools }: MainNavProps) {
   const pathname = usePathname();
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const cats = await getCategories();
+      setAllCategories(cats);
+    };
+    fetchCategories();
+  }, []);
   
   const userTools = tools.filter(tool => 
     user.role === 'Admin' || user.role === 'Superadmin' || (user.assignedTools && user.assignedTools.includes(tool.id))
@@ -38,11 +49,11 @@ export function MainNav({ user, tools }: MainNavProps) {
   const hasAdminAccess = user.role === "Admin" || user.role === "Superadmin";
 
   const toolsByCategory = userTools.reduce((acc, tool) => {
-    const category = tool.category || "General";
-    if (!acc[category]) {
-      acc[category] = [];
+    const categoryName = tool.category || "General";
+    if (!acc[categoryName]) {
+      acc[categoryName] = [];
     }
-    acc[category].push(tool);
+    acc[categoryName].push(tool);
     return acc;
   }, {} as Record<string, Tool[]>);
 
@@ -57,30 +68,47 @@ export function MainNav({ user, tools }: MainNavProps) {
         </SidebarMenuItem>
       </Link>
 
-      {Object.entries(toolsByCategory).map(([category, categoryTools]) => (
-        <SidebarGroup key={category}>
-          <SidebarGroupLabel>{category}</SidebarGroupLabel>
-          {categoryTools.map((tool) => (
-             <Link href={`/tool/${tool.id}`} key={tool.id}>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === `/tool/${tool.id}`}
-                >
-                  <Avatar className="h-5 w-5 rounded-sm">
-                    {tool.iconUrl ? (
-                      <AvatarImage src={tool.iconUrl} alt={tool.name} className="object-contain" />
+      {Object.entries(toolsByCategory).map(([categoryName, categoryTools]) => {
+        const category = allCategories.find(c => c.name === categoryName);
+        if (!category?.enabled && categoryName !== 'General') return null;
+
+        return (
+          <SidebarGroup key={categoryName}>
+            <SidebarGroupLabel className="flex items-center gap-2">
+              {category && (
+                 <Avatar className="h-5 w-5 rounded-sm">
+                    {category.iconUrl ? (
+                      <AvatarImage src={category.iconUrl} alt={category.name} className="object-contain" />
                     ) : null}
                     <AvatarFallback className="rounded-sm bg-transparent">
-                      <DynamicIcon name={tool.icon} className="h-4 w-4" />
+                      <DynamicIcon name={category.icon} className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
-                  <span>{tool.name}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </Link>
-          ))}
-        </SidebarGroup>
-      ))}
+              )}
+              <span>{categoryName}</span>
+            </SidebarGroupLabel>
+            {categoryTools.map((tool) => (
+              <Link href={`/tool/${tool.id}`} key={tool.id}>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname === `/tool/${tool.id}`}
+                  >
+                    <Avatar className="h-5 w-5 rounded-sm">
+                      {tool.iconUrl ? (
+                        <AvatarImage src={tool.iconUrl} alt={tool.name} className="object-contain" />
+                      ) : null}
+                      <AvatarFallback className="rounded-sm bg-transparent">
+                        <DynamicIcon name={tool.icon} className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{tool.name}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </Link>
+            ))}
+          </SidebarGroup>
+        )
+      })}
 
       <SidebarSeparator />
 

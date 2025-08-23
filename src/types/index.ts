@@ -33,4 +33,6 @@ export interface Category {
   name: string;
   description: string;
   enabled: boolean;
+  icon: string; // lucide-react icon name
+  iconUrl?: string; // URL for a custom icon image
 }

@@ -52,12 +52,12 @@ let tools: Tool[] = [
 ];
 
 let categories: Category[] = [
-    { id: "cat1", name: "Finanzas", description: "Herramientas para gestión financiera", enabled: true },
-    { id: "cat2", name: "Marketing", description: "Herramientas para campañas y análisis", enabled: true },
-    { id: "cat3", name: "Diseño", description: "Herramientas para creativos", enabled: true },
-    { id: "cat4", name: "Proyectos", description: "Herramientas para gestión de proyectos", enabled: true },
-    { id: "cat5", name: "Contabilidad", description: "Herramientas para contabilidad y finanzas", enabled: false },
-    { id: "cat6", name: "IT", description: "Herramientas para el equipo de TI", enabled: true },
+    { id: "cat1", name: "Finanzas", description: "Herramientas para gestión financiera", enabled: true, icon: "Shapes" },
+    { id: "cat2", name: "Marketing", description: "Herramientas para campañas y análisis", enabled: true, icon: "Shapes" },
+    { id: "cat3", name: "Diseño", description: "Herramientas para creativos", enabled: true, icon: "Shapes" },
+    { id: "cat4", name: "Proyectos", description: "Herramientas para gestión de proyectos", enabled: true, icon: "Shapes" },
+    { id: "cat5", name: "Contabilidad", description: "Herramientas para contabilidad y finanzas", enabled: false, icon: "Shapes" },
+    { id: "cat6", name: "IT", description: "Herramientas para el equipo de TI", enabled: true, icon: "Shapes" },
 ];
 
 let logs: LogEntry[] = [];
