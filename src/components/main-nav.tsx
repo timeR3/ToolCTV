@@ -119,14 +119,6 @@ export function MainNav({ user, tools }: MainNavProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </Link>
-             <Link href="/assign-tools">
-                <SidebarMenuItem>
-                    <SidebarMenuButton isActive={pathname === "/assign-tools"}>
-                        <UserCheck />
-                        <span>Assign Tools</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-             </Link>
             <Link href="/audit-log">
               <SidebarMenuItem>
                 <SidebarMenuButton
