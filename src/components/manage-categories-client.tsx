@@ -35,6 +35,7 @@ import { addCategory, deleteCategory, updateCategory } from "@/lib/data";
 import type { Category, User } from "@/types";
 import { Loader2, Pencil, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "./ui/switch";
 
 interface ManageCategoriesClientProps {
   initialCategories: Category[];
@@ -52,7 +53,7 @@ export function ManageCategoriesClient({ initialCategories, user }: ManageCatego
   const { toast } = useToast();
 
   const handleNewCategory = () => {
-    setCurrentCategory({});
+    setCurrentCategory({enabled: true});
     setIsDialogOpen(true);
   };
 
@@ -99,7 +100,11 @@ export function ManageCategoriesClient({ initialCategories, user }: ManageCatego
           });
         }
       } else {
-        const newCategory = await addCategory({ name: currentCategory.name }, user);
+        const newCategory = await addCategory({ 
+            name: currentCategory.name,
+            description: currentCategory.description || "",
+            enabled: currentCategory.enabled ?? true,
+        }, user);
         setCategories([...categories, newCategory]);
         toast({
           title: "Success",
@@ -130,6 +135,8 @@ export function ManageCategoriesClient({ initialCategories, user }: ManageCatego
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -137,6 +144,8 @@ export function ManageCategoriesClient({ initialCategories, user }: ManageCatego
             {categories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell className="font-medium">{category.name}</TableCell>
+                <TableCell className="text-muted-foreground">{category.description}</TableCell>
+                <TableCell>{category.enabled ? "Enabled" : "Disabled"}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
@@ -185,6 +194,23 @@ export function ManageCategoriesClient({ initialCategories, user }: ManageCatego
                 }
                 className="col-span-3"
               />
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="description"
+                value={currentCategory.description || ""}
+                onChange={(e) =>
+                  setCurrentCategory({ ...currentCategory, description: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="enabled" className="text-right">Enabled</Label>
+              <Switch id="enabled" checked={currentCategory.enabled} onCheckedChange={(checked) => setCurrentCategory({...currentCategory, enabled: checked })} />
             </div>
           </div>
           <DialogFooter>

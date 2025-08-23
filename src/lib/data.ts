@@ -15,6 +15,7 @@ let tools: Tool[] = [
     description: "A Kanban board for project management.",
     url: "https://trello.com",
     icon: "Wrench",
+    iconUrl: "",
     enabled: true,
     category: "Proyectos",
   },
@@ -24,6 +25,7 @@ let tools: Tool[] = [
     description: "Tool for scanning web vulnerabilities.",
     url: "https://www.ssllabs.com/ssltest/",
     icon: "ShieldCheck",
+    iconUrl: "",
     enabled: true,
     category: "IT",
   },
@@ -33,6 +35,7 @@ let tools: Tool[] = [
     description: "Git repository management.",
     url: "https://github.com",
     icon: "GitBranch",
+    iconUrl: "",
     enabled: false,
     category: "IT",
   },
@@ -42,18 +45,19 @@ let tools: Tool[] = [
     description: "Log and track work hours.",
     url: "https://toggl.com/track/timer/",
     icon: "FileClock",
+    iconUrl: "",
     enabled: true,
     category: "Contabilidad",
   },
 ];
 
 let categories: Category[] = [
-    { id: "cat1", name: "Finanzas" },
-    { id: "cat2", name: "Marketing" },
-    { id: "cat3", name: "Diseño" },
-    { id: "cat4", name: "Proyectos" },
-    { id: "cat5", name: "Contabilidad" },
-    { id: "cat6", name: "IT" },
+    { id: "cat1", name: "Finanzas", description: "Herramientas para gestión financiera", enabled: true },
+    { id: "cat2", name: "Marketing", description: "Herramientas para campañas y análisis", enabled: true },
+    { id: "cat3", name: "Diseño", description: "Herramientas para creativos", enabled: true },
+    { id: "cat4", name: "Proyectos", description: "Herramientas para gestión de proyectos", enabled: true },
+    { id: "cat5", name: "Contabilidad", description: "Herramientas para contabilidad y finanzas", enabled: false },
+    { id: "cat6", name: "IT", description: "Herramientas para el equipo de TI", enabled: true },
 ];
 
 let logs: LogEntry[] = [];
