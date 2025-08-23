@@ -137,6 +137,8 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
     }
   };
 
+  const enabledTools = allTools.filter(tool => tool.enabled);
+
   return (
     <div className="flex flex-col gap-6">
       <Card>
@@ -177,7 +179,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                                 e.stopPropagation();
                                 handleEditUser(user);
                             }}
-                            disabled={user.id === currentUser.id}
+                            disabled={user.id === currentUser.id || user.role === 'Superadmin'}
                         >
                             <Pencil className="h-4 w-4" />
                         </Button>
@@ -202,7 +204,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                 </p>
                 <ScrollArea className="h-72">
                     <div className="grid gap-4">
-                        {allTools.filter(t => t.enabled).map(tool => (
+                        {enabledTools.map(tool => (
                         <div key={tool.id} className="flex items-center space-x-2">
                             <Checkbox
                                 id={`tool-${tool.id}`}
