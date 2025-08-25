@@ -15,10 +15,20 @@ const pool = mysql.createPool({
 });
 
 export async function query(sql: string, params: any[]) {
-  const [rows] = await pool.execute(sql, params);
-  return rows;
+  try {
+    const [rows] = await pool.execute(sql, params);
+    return rows;
+  } catch (error: any) {
+    // Intercept database errors to provide more helpful feedback.
+    if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+       console.error("Database access denied. Please check your DB_USER and DB_PASSWORD environment variables.");
+       throw new Error("Database access denied. Please check your DB_USER and DB_PASSWORD environment variables.");
+    }
+     if (error.code === 'ER_BAD_DB_ERROR') {
+        console.error(`Database not found. Please check your DB_DATABASE environment variable. The value is currently '${process.env.DB_DATABASE}'.`);
+        throw new Error(`Database not found. Please check your DB_DATABASE environment variable.`);
+    }
+    // Re-throw other errors
+    throw error;
+  }
 }
-
-// Example of how to use it:
-// import { query } from './db';
-// const users = await query('SELECT * FROM users WHERE id = ?', [userId]);
