@@ -18,6 +18,7 @@ import { UserNav } from "@/components/auth/user-nav";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainNav } from '@/components/main-nav';
+import { RoleSwitcher } from '@/components/auth/role-switcher';
 
 
 export const metadata: Metadata = {
@@ -76,7 +77,8 @@ export default async function RootLayout({
           <SidebarInset>
             <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
               <SidebarTrigger className="md:hidden" />
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-4">
+                <RoleSwitcher currentUser={user} />
                 <UserNav user={user} />
               </div>
             </header>
