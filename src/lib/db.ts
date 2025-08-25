@@ -22,5 +22,3 @@ export async function query(sql: string, params: any[]) {
 // Example of how to use it:
 // import { query } from './db';
 // const users = await query('SELECT * FROM users WHERE id = ?', [userId]);
-
-export default pool;
