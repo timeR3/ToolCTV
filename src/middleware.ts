@@ -2,30 +2,21 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getSession } from '@/lib/auth';
 
-export const runtime = 'nodejs'; // Force Node.js runtime
-
 export async function middleware(request: NextRequest) {
   const session = await getSession();
   const { pathname } = request.nextUrl;
-  const isPublicPath = pathname.startsWith('/login') || pathname.startsWith('/register');
 
-  // If the user has a session and is trying to access a public path (login/register),
-  // redirect them to the dashboard.
-  if (session && isPublicPath) {
-    return NextResponse.redirect(new URL('/', request.url));
+  // Allow requests to /login, /register, and public assets
+  if (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/_next') || pathname.startsWith('/static')) {
+    return NextResponse.next();
   }
 
-  // If the user does not have a session and is trying to access a protected path,
-  // redirect them to the login page.
-  if (!session && !isPublicPath) {
-    // Allow access to Next.js specific paths even without a session
-    if (pathname.startsWith('/_next') || pathname.startsWith('/static')) {
-        return NextResponse.next();
-    }
+  // If there's no session, redirect to login
+  if (!session) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   
-  // Allow the request to proceed
+  // If there is a session, allow the request
   return NextResponse.next();
 }
 
