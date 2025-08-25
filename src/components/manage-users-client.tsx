@@ -142,7 +142,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
   const enabledTools = allTools.filter(tool => tool.enabled);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-6">
       <Card>
         <CardHeader>
             <CardTitle>Users</CardTitle>
