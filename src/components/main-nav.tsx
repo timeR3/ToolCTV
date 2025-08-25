@@ -22,29 +22,15 @@ import {
 import { DynamicIcon } from "@/components/icons";
 import type { Category, Tool, User } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { getCategories } from "@/lib/data";
-import { useEffect, useState } from "react";
 
 interface MainNavProps {
   user: User;
-  tools: Tool[];
+  userTools: Tool[];
+  allCategories: Category[];
 }
 
-export function MainNav({ user, tools }: MainNavProps) {
+export function MainNav({ user, userTools, allCategories }: MainNavProps) {
   const pathname = usePathname();
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const cats = await getCategories();
-      setAllCategories(cats);
-    };
-    fetchCategories();
-  }, []);
-  
-  const userTools = tools.filter(tool => 
-    user.role === 'Admin' || user.role === 'Superadmin' || (user.assignedTools && user.assignedTools.includes(tool.id))
-  ).filter(tool => tool.enabled);
   
   const isSuperadmin = user.role === "Superadmin";
   const isAdmin = user.role === "Admin";
@@ -111,7 +97,7 @@ export function MainNav({ user, tools }: MainNavProps) {
         )
       })}
 
-      <SidebarSeparator />
+      {(isAdmin || isSuperadmin) && <SidebarSeparator />}
 
       <SidebarGroup>
         <SidebarGroupLabel>Settings</SidebarGroupLabel>
@@ -124,7 +110,7 @@ export function MainNav({ user, tools }: MainNavProps) {
           </SidebarMenuItem>
         </Link>
         
-        {(isSuperadmin || isAdmin) && (
+        {(isAdmin || isSuperadmin) && (
             <Link href="/manage-users">
               <SidebarMenuItem>
                 <SidebarMenuButton isActive={pathname === "/manage-users"}>

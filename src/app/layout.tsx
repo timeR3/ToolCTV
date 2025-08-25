@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 import { getCurrentUser } from "@/lib/auth";
-import { getTools } from "@/lib/data";
+import { getCategories, getTools } from "@/lib/data";
 import {
   SidebarProvider,
   Sidebar,
@@ -19,6 +19,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainNav } from '@/components/main-nav';
 import { RoleSwitcher } from '@/components/auth/role-switcher';
+import type { Category, Tool } from '@/types';
 
 
 export const metadata: Metadata = {
@@ -26,11 +27,23 @@ export const metadata: Metadata = {
   description: 'Your integrated tool suite.',
 };
 
+interface NavProps {
+  userTools: Tool[];
+  allCategories: Category[];
+}
+
 const Nav = async () => {
   const user = await getCurrentUser();
-  const tools = await getTools();
+  const allTools = await getTools();
+  const allCategories = await getCategories();
 
-  return <MainNav user={user} tools={tools} />;
+  const userTools = allTools.filter(tool => 
+    user.role === 'Admin' || 
+    user.role === 'Superadmin' || 
+    (user.assignedTools && user.assignedTools.includes(tool.id))
+  ).filter(tool => tool.enabled);
+
+  return <MainNav user={user} userTools={userTools} allCategories={allCategories} />;
 };
 
 const NavSkeleton = () => {
