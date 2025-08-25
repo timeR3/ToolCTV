@@ -46,7 +46,8 @@ export function MainNav({ user, tools }: MainNavProps) {
     user.role === 'Admin' || user.role === 'Superadmin' || (user.assignedTools && user.assignedTools.includes(tool.id))
   ).filter(tool => tool.enabled);
   
-  const hasAdminAccess = user.role === "Admin" || user.role === "Superadmin";
+  const isSuperadmin = user.role === "Superadmin";
+  const isAdmin = user.role === "Admin";
 
   const toolsByCategory = userTools.reduce((acc, tool) => {
     const categoryName = tool.category || "General";
@@ -122,8 +123,19 @@ export function MainNav({ user, tools }: MainNavProps) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </Link>
+        
+        {(isSuperadmin || isAdmin) && (
+            <Link href="/manage-users">
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={pathname === "/manage-users"}>
+                  <Users />
+                  <span>Manage Users</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </Link>
+        )}
 
-        {hasAdminAccess && (
+        {isSuperadmin && (
           <>
             <Link href="/manage-tools">
               <SidebarMenuItem>
@@ -141,29 +153,19 @@ export function MainNav({ user, tools }: MainNavProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </Link>
-            <Link href="/manage-users">
-              <SidebarMenuItem>
-                <SidebarMenuButton isActive={pathname === "/manage-users"}>
-                  <Users />
-                  <span>Manage Users</span>
+             <Link href="/audit-log">
+                <SidebarMenuItem>
+                <SidebarMenuButton
+                    isActive={pathname.startsWith("/audit-log")}
+                >
+                    <FileClock />
+                    <span>Audit Log</span>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+                </SidebarMenuItem>
             </Link>
           </>
         )}
 
-        {user.role === "Superadmin" && (
-          <Link href="/audit-log">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={pathname.startsWith("/audit-log")}
-              >
-                <FileClock />
-                <span>Audit Log</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </Link>
-        )}
       </SidebarGroup>
     </SidebarMenu>
   );
