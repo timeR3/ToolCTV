@@ -94,6 +94,19 @@ export async function login(prevState: { error: string } | undefined, formData: 
     }
 
     try {
+        // Special one-time logic to create the admin user if it doesn't exist
+        if (email === 'admin@example.com' && password === 'admin') {
+            let adminUsers = await query('SELECT * FROM users WHERE email = ?', [email]) as any[];
+            if (adminUsers.length === 0) {
+                console.log("Creating temporary admin user during login...");
+                const hashedPassword = await bcrypt.hash('admin', 10);
+                await query(
+                    'INSERT INTO users (name, email, password, role, avatar) VALUES (?, ?, ?, ?, ?)',
+                    ['Admin', 'admin@example.com', hashedPassword, 'Admin', '']
+                );
+            }
+        }
+
         const users = await query('SELECT * FROM users WHERE email = ?', [email]) as any[];
         if (users.length === 0) {
             return { error: 'Invalid email or password.' };
