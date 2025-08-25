@@ -3,8 +3,6 @@
 import type { Tool, LogEntry, User, Category, Role, Permission } from "@/types";
 import { query } from './db';
 
-let logs: LogEntry[] = [];
-
 // Simulate fetching data with a delay
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -15,24 +13,24 @@ export const getTools = async (): Promise<Tool[]> => {
       FROM tools t
       LEFT JOIN categories c ON t.category_id = c.id
     `, []) as any[];
-    return rows.map(row => ({...row, category: row.categoryName, id: Number(row.id) }));
+    return rows.map(row => ({...row, category: row.categoryName, id: Number(row.id), created_by_user_id: Number(row.created_by_user_id) }));
   } catch (error) {
     console.error("Failed to fetch tools:", error);
     return [];
   }
 };
 
-export const addTool = async (tool: Omit<Tool, 'id' | 'category'> & { category_id: number }, user: User): Promise<Tool> => {
+export const addTool = async (tool: Omit<Tool, 'id' | 'category' | 'created_by_user_id'> & { category_id: number }, user: User): Promise<Tool> => {
   await sleep(200);
   const result = await query(
-    'INSERT INTO tools (name, description, url, icon, iconUrl, enabled, category_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [tool.name, tool.description, tool.url, tool.icon, tool.iconUrl, tool.enabled, tool.category_id]
+    'INSERT INTO tools (name, description, url, icon, iconUrl, enabled, category_id, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [tool.name, tool.description, tool.url, tool.icon, tool.iconUrl, tool.enabled, tool.category_id, user.id]
   ) as any;
   const newToolId = result.insertId;
   logAction(user, `Created tool: ${tool.name}`, `ID: ${newToolId}`);
   const newToolResult = await query('SELECT t.*, c.name as categoryName FROM tools t LEFT JOIN categories c ON t.category_id = c.id WHERE t.id = ?', [newToolId]) as any[];
   const newTool = newToolResult[0];
-  return {...newTool, category: newTool.categoryName, id: Number(newTool.id)};
+  return {...newTool, category: newTool.categoryName, id: Number(newTool.id), created_by_user_id: Number(newTool.created_by_user_id)};
 };
 
 export const updateTool = async (updatedTool: Tool, user: User) => {
@@ -40,6 +38,12 @@ export const updateTool = async (updatedTool: Tool, user: User) => {
   const oldToolResult = await query('SELECT * FROM tools WHERE id = ?', [updatedTool.id]) as any[];
   if (oldToolResult.length > 0) {
     const oldTool = oldToolResult[0];
+
+    // Ownership check
+    if (oldTool.created_by_user_id !== user.id && user.role !== 'Superadmin') {
+      throw new Error("Permission Denied. You can only edit tools you created.");
+    }
+
     const categoryResult = await query('SELECT id FROM categories WHERE name = ?', [updatedTool.category]) as any[];
     const category_id = categoryResult[0]?.id;
 
@@ -52,18 +56,24 @@ export const updateTool = async (updatedTool: Tool, user: User) => {
     logAction(user, `Updated tool: ${updatedTool.name}`, `Changes: ${JSON.stringify(diff(oldTool, updatedTool))}`);
     const newToolResult = await query('SELECT t.*, c.name as categoryName FROM tools t LEFT JOIN categories c ON t.category_id = c.id WHERE t.id = ?', [updatedTool.id]) as any[];
     const newTool = newToolResult[0];
-    return {...newTool, category: newTool.categoryName, id: Number(newTool.id)};
+    return {...newTool, category: newTool.categoryName, id: Number(newTool.id), created_by_user_id: Number(newTool.created_by_user_id)};
   }
   return null;
 };
 
 export const deleteTool = async (toolId: number, user: User) => {
   await sleep(200);
-  const toolToDeleteResult = await query('SELECT name FROM tools WHERE id = ?', [toolId]) as any[];
+  const toolToDeleteResult = await query('SELECT name, created_by_user_id FROM tools WHERE id = ?', [toolId]) as any[];
   if(toolToDeleteResult.length > 0) {
-    const toolName = toolToDeleteResult[0].name;
+    const toolToDelete = toolToDeleteResult[0];
+    
+    // Ownership check
+    if (toolToDelete.created_by_user_id !== user.id && user.role !== 'Superadmin') {
+      throw new Error("Permission Denied. You can only delete tools you created.");
+    }
+
     await query('DELETE FROM tools WHERE id = ?', [toolId]);
-    logAction(user, `Deleted tool: ${toolName}`, `ID: ${toolId}`);
+    logAction(user, `Deleted tool: ${toolToDelete.name}`, `ID: ${toolId}`);
   }
 };
 
@@ -90,15 +100,6 @@ const logAction = async (user: User, action: string, details: string) => {
         );
     } catch (error) {
         console.error("Failed to log action:", error);
-        // Fallback to in-memory logging if DB fails
-        const newLog: LogEntry = {
-            id: Date.now(),
-            timestamp: new Date(),
-            adminName: user.name,
-            action,
-            details,
-        };
-        logs.unshift(newLog);
     }
 };
 
@@ -183,8 +184,11 @@ export const deleteCategory = async (categoryId: number, user: User) => {
     if (categoryToDeleteResult.length > 0) {
         const categoryToDelete = categoryToDeleteResult[0];
         // Before deleting, update tools in this category to the 'General' category.
-        const generalCategory = await query('SELECT id FROM categories WHERE name = ?', ['General']) as any[];
-        const generalCategoryId = generalCategory.length > 0 ? generalCategory[0].id : null;
+        const generalCategoryResult = await query('SELECT id FROM categories WHERE name = ?', ['General']) as any[];
+        if (generalCategoryResult.length === 0) {
+            throw new Error("The 'General' category does not exist.");
+        }
+        const generalCategoryId = generalCategoryResult[0].id;
         await query(`UPDATE tools SET category_id = ? WHERE category_id = ?`, [generalCategoryId, categoryId]);
 
         await query('DELETE FROM categories WHERE id = ?', [categoryId]);
@@ -207,9 +211,9 @@ export const getUsers = async (): Promise<User[]> => {
       if (!acc[row.user_id]) {
         acc[row.user_id] = [];
       }
-      acc[row.user_id].push(row.tool_id);
+      acc[row.user_id].push(Number(row.tool_id));
       return acc;
-    }, {} as Record<string, number[]>);
+    }, {} as Record<number, number[]>);
 
 
     return usersRows.map(user => ({
@@ -227,8 +231,9 @@ export const assignToolsToUser = async (userId: number, toolIds: number[], admin
     if (admin.role !== 'Admin' && admin.role !== 'Superadmin') {
         throw new Error('Only Admins and Superadmins can assign tools.');
     }
-    const connection = await query('START TRANSACTION', []);
+    
     try {
+        await query('START TRANSACTION', []);
         await query('DELETE FROM user_tools WHERE user_id = ?', [userId]);
 
         if (toolIds.length > 0) {

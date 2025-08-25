@@ -18,6 +18,7 @@ export interface Tool {
   iconUrl?: string; // URL for a custom icon image
   enabled: boolean;
   category: string;
+  created_by_user_id: number;
 }
 
 export interface LogEntry {

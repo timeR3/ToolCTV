@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -33,9 +32,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { addTool, deleteTool, getCategories, getTools, updateTool } from "@/lib/data";
+import { addTool, deleteTool, getCategories, updateTool } from "@/lib/data";
 import type { Tool, User, Category } from "@/types";
-import { Loader2, Pencil, PlusCircle, Trash2, Wrench } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -59,14 +58,18 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
 
   useEffect(() => {
     const fetchCategories = async () => {
-        const fetchedCategories = await getCategories();
-        setCategories(fetchedCategories);
+        try {
+            const fetchedCategories = await getCategories();
+            setCategories(fetchedCategories);
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch categories.'})
+        }
     }
     fetchCategories();
-  }, []);
+  }, [toast]);
 
   const handleNewTool = () => {
-    setCurrentTool({ category: categories[0]?.name || "General", enabled: true, icon: "Wrench" });
+    setCurrentTool({ category: categories[0]?.name || "General", enabled: true, icon: "Wrench", created_by_user_id: user.id });
     setIsDialogOpen(true);
   };
 
@@ -83,15 +86,24 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
   const confirmDelete = async () => {
     if (!toolToDelete) return;
     setIsDeleting(true);
-    await deleteTool(toolToDelete.id, user);
-    setTools(tools.filter(t => t.id !== toolToDelete.id));
-    toast({
-      title: "Tool Deleted",
-      description: `The tool "${toolToDelete.name}" has been deleted.`,
-    });
-    setIsDeleting(false);
-    setIsAlertOpen(false);
-    setToolToDelete(null);
+    try {
+      await deleteTool(toolToDelete.id, user);
+      setTools(tools.filter(t => t.id !== toolToDelete.id));
+      toast({
+        title: "Tool Deleted",
+        description: `The tool "${toolToDelete.name}" has been deleted.`,
+      });
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Error Deleting Tool",
+            description: error.message || "Could not delete the tool.",
+        });
+    } finally {
+        setIsDeleting(false);
+        setIsAlertOpen(false);
+        setToolToDelete(null);
+    }
   }
 
   const handleSave = async () => {
@@ -126,12 +138,13 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             enabled: currentTool.enabled ?? false,
             category_id: selectedCategory.id
         }, user);
-        setTools([newTool, ...tools]);
+        const newTools = await getTools(); // Re-fetch to get the full new tool object
+        setTools(newTools);
         toast({ title: "Success", description: "Tool added successfully." });
       }
       setIsDialogOpen(false);
-    } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "Could not save the tool." });
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Error Saving Tool", description: error.message || "Could not save the tool." });
     } finally {
         setIsSaving(false);
     }
@@ -174,10 +187,22 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
                 <TableCell>{tool.category}</TableCell>
                 <TableCell>{tool.enabled ? "Enabled" : "Disabled"}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => handleEditTool(tool)}>
+                   <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleEditTool(tool)}
+                    disabled={user.role !== 'Superadmin' && user.id !== tool.created_by_user_id}
+                    title={user.role !== 'Superadmin' && user.id !== tool.created_by_user_id ? "You can only edit tools you created" : "Edit tool"}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(tool)}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleDeleteClick(tool)}
+                    disabled={user.role !== 'Superadmin' && user.id !== tool.created_by_user_id}
+                    title={user.role !== 'Superadmin' && user.id !== tool.created_by_user_id ? "You can only delete tools you created" : "Delete tool"}
+                  >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </TableCell>
