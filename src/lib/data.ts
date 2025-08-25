@@ -2,6 +2,9 @@
 // This file acts as a mock in-memory database.
 import type { Tool, LogEntry, User, Category, Role, Permission } from "@/types";
 import { query } from './db';
+import bcrypt from 'bcrypt';
+
+const SALT_ROUNDS = 10;
 
 // Simulate fetching data with a delay
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -30,11 +33,17 @@ export const getTools = async (): Promise<Tool[]> => {
   }
 };
 
-export const addTool = async (tool: Omit<Tool, 'id' | 'category' | 'created_by_user_id'> & { category_id: number }, user: User): Promise<Tool> => {
+export const addTool = async (tool: Omit<Tool, 'id' | 'category' | 'createdByUser'>, user: User): Promise<Tool> => {
   await sleep(200);
+  const categoryResult = await query('SELECT id FROM categories WHERE name = ?', [tool.category]) as any[];
+    if (categoryResult.length === 0) {
+        throw new Error(`Category not found: ${tool.category}`);
+    }
+  const category_id = categoryResult[0].id;
+
   const result = await query(
     'INSERT INTO tools (name, description, url, icon, iconUrl, enabled, category_id, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [tool.name, tool.description, tool.url, tool.icon, tool.iconUrl, tool.enabled, tool.category_id, user.id]
+    [tool.name, tool.description, tool.url, tool.icon, tool.iconUrl, tool.enabled, category_id, user.id]
   ) as any;
   const newToolId = result.insertId;
   logAction(user, `Created tool: ${tool.name}`, `ID: ${newToolId}`);
@@ -142,8 +151,8 @@ export const logUserAccess = async (user: User, action: string, details: string 
 
 // Helper to find differences between two objects for logging
 const diff = (obj1: any, obj2: any) => {
-  return Object.keys(obj1).reduce((result, key) => {
-    if (obj2.hasOwnProperty(key) && obj1[key] !== obj2[key]) {
+  return Object.keys(obj2).reduce((result, key) => {
+    if (obj1.hasOwnProperty(key) && obj1[key] !== obj2[key] && key !== 'password') {
       result[key] = { from: obj1[key], to: obj2[key] };
     }
     return result;
@@ -154,7 +163,7 @@ const diff = (obj1: any, obj2: any) => {
 export const getCategories = async (): Promise<Category[]> => {
     try {
       const rows = await query('SELECT * FROM categories', []) as any[];
-      return rows.map(r => ({ ...r, id: Number(r.id) }));
+      return rows.map(r => ({ ...r, id: Number(r.id), enabled: Boolean(r.enabled) }));
     } catch(error) {
       console.error("Failed to fetch categories:", error);
       return [];
@@ -170,7 +179,7 @@ export const addCategory = async (category: Omit<Category, 'id'>, user: User): P
     const newCategoryId = result.insertId;
     logAction(user, `Created category: ${category.name}`, `ID: ${newCategoryId}`);
     const newCategory = await query('SELECT * FROM categories WHERE id = ?', [newCategoryId]) as any[];
-    return { ...newCategory[0], id: Number(newCategory[0].id) };
+    return { ...newCategory[0], id: Number(newCategory[0].id), enabled: Boolean(newCategory[0].enabled) };
 }
 
 export const updateUserRole = async (userId: number, role: Role, admin: User): Promise<User | null> => {
@@ -179,22 +188,46 @@ export const updateUserRole = async (userId: number, role: Role, admin: User): P
     }
     try {
         await query('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
-        const updatedUserResult = await query('SELECT * FROM users WHERE id = ?', [userId]) as any[];
-        const updatedUser = updatedUserResult[0];
-        
-        if (updatedUser) {
-            logAction(admin, `Updated role for ${updatedUser.name} to ${role}`, `User ID: ${userId}`);
-            // Fetch assigned tools for the user to return a complete User object
-            const assignedToolsResult = await query('SELECT tool_id FROM user_tools WHERE user_id = ?', [userId]) as any[];
-            updatedUser.assignedTools = assignedToolsResult.map((row: any) => row.tool_id);
-            return { ...updatedUser, id: Number(updatedUser.id) };
-        }
-        return null;
+        logAction(admin, `Updated role for user ID ${userId} to ${role}`, `Admin: ${admin.name}`);
+        return await getUserById(userId);
     } catch (error) {
         console.error("Failed to update user role:", error);
         throw new Error('Database error while updating user role.');
     }
 }
+
+export const updateUser = async (userId: number, data: Partial<User>, admin: User): Promise<User | null> => {
+    const isSelfUpdate = userId === admin.id;
+    if (!isSelfUpdate && admin.role !== 'Superadmin') {
+        throw new Error("You are not authorized to update this user.");
+    }
+
+    const oldUserResult = await query('SELECT * FROM users WHERE id = ?', [userId]) as any[];
+    if (oldUserResult.length === 0) throw new Error("User not found");
+    const oldUser = oldUserResult[0];
+
+    const fieldsToUpdate: Partial<User> = {};
+    if (data.name) fieldsToUpdate.name = data.name;
+    if (data.email && admin.role === 'Superadmin') fieldsToUpdate.email = data.email;
+    if (data.password) {
+        const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
+        fieldsToUpdate.password = hashedPassword;
+    }
+
+    if (Object.keys(fieldsToUpdate).length === 0) {
+      return getUserById(userId); // Nothing to update
+    }
+
+    const setClause = Object.keys(fieldsToUpdate).map(key => `${key} = ?`).join(', ');
+    const values = Object.values(fieldsToUpdate);
+
+    await query(`UPDATE users SET ${setClause} WHERE id = ?`, [...values, userId]);
+    
+    logAction(admin, `Updated user profile for ${oldUser.name}`, `Changes: ${JSON.stringify(diff(oldUser, data))}`);
+
+    return await getUserById(userId);
+};
+
 
 export const updateCategory = async (updatedCategory: Category, user: User) => {
     await sleep(100);
@@ -206,7 +239,8 @@ export const updateCategory = async (updatedCategory: Category, user: User) => {
             [updatedCategory.name, updatedCategory.description, updatedCategory.enabled, updatedCategory.icon, updatedCategory.iconUrl, updatedCategory.id]
         );
         logAction(user, `Updated category: ${updatedCategory.name}`, `Changes: ${JSON.stringify(diff(oldCategory, updatedCategory))}`);
-        return { ...updatedCategory, id: Number(updatedCategory.id) };
+        const newCategory = (await query('SELECT * FROM categories WHERE id = ?', [updatedCategory.id]) as any[])[0];
+        return { ...newCategory, id: Number(newCategory.id), enabled: Boolean(newCategory.enabled) };
     }
     return null;
 }
@@ -228,6 +262,31 @@ export const deleteCategory = async (categoryId: number, user: User) => {
         logAction(user, `Deleted category: ${categoryToDelete.name}`, `ID: ${categoryId}`);
     }
 }
+
+export const getUserById = async (userId: number): Promise<User | null> => {
+    try {
+        const userQuery = `SELECT id, name, email, avatar, role FROM users WHERE id = ?`;
+        const usersRows = await query(userQuery, [userId]) as any[];
+
+        if (usersRows.length === 0) return null;
+
+        const user = usersRows[0];
+        
+        const userToolsQuery = `SELECT tool_id FROM user_tools WHERE user_id = ?`;
+        const userToolsRows = await query(userToolsQuery, [userId]) as any[];
+        const assignedTools = userToolsRows.map((row: any) => Number(row.tool_id));
+
+        return {
+            ...user,
+            id: Number(user.id),
+            assignedTools,
+        } as User;
+    } catch (error) {
+        console.error("Failed to fetch user:", error);
+        return null;
+    }
+}
+
 
 export const getUsers = async (): Promise<User[]> => {
   try {
@@ -275,16 +334,12 @@ export const assignToolsToUser = async (userId: number, toolIds: number[], admin
         }
         await query('COMMIT', []);
         
-        const updatedUserResult = await query('SELECT * FROM users WHERE id = ?', [userId]) as any[];
-        const updatedUser = updatedUserResult[0];
+        const updatedUser = await getUserById(userId);
 
         if (updatedUser) {
             logAction(admin, `Assigned tools to ${updatedUser.name}`, `Tool IDs: ${toolIds.join(', ')}`);
-             const assignedToolsResult = await query('SELECT tool_id FROM user_tools WHERE user_id = ?', [userId]) as any[];
-            updatedUser.assignedTools = assignedToolsResult.map((row: any) => Number(row.tool_id));
-            return { ...updatedUser, id: Number(updatedUser.id) };
         }
-        return null;
+        return updatedUser;
     } catch (error) {
         await query('ROLLBACK', []);
         console.error("Failed to assign tools to user:", error);

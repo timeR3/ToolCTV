@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,7 @@ import type { User } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { updateUser } from "@/lib/data";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -35,6 +37,7 @@ interface ProfileFormProps {
 
 export function ProfileForm({ user }: ProfileFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -47,14 +50,30 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    // In a real app, you'd call an API endpoint here.
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log("Updated profile:", values);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been successfully updated.",
-    });
-    setIsSaving(false);
+    try {
+      const dataToUpdate: Partial<User> = { name: values.name };
+      if (values.password) {
+        dataToUpdate.password = values.password;
+      }
+      
+      await updateUser(user.id, dataToUpdate, user);
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
+      // Refresh the page to reflect changes in the header/nav
+      router.refresh();
+
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: error.message || "Could not update your profile.",
+        });
+    } finally {
+        setIsSaving(false);
+    }
   }
 
   return (

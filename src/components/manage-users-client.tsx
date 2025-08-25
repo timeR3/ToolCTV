@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { assignToolsToUser, updateUserRole } from "@/lib/data";
+import { assignToolsToUser, updateUser, updateUserRole } from "@/lib/data";
 import type { User, Role, Tool } from "@/types";
 import { Loader2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
 
 interface ManageUsersClientProps {
   initialUsers: User[];
@@ -46,11 +48,12 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [assignedTools, setAssignedTools] = useState<number[]>([]);
   
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSavingRole, setIsSavingRole] = useState(false);
-  const [isSavingTools, setIsSavingTools] = useState(false);
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [currentUserToEdit, setCurrentUserToEdit] = useState<Partial<User>>({});
+  const [newPassword, setNewPassword] = useState("");
   const { toast } = useToast();
 
   const handleSelectUser = (user: User) => {
@@ -62,9 +65,15 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
     setAssignedTools(user.assignedTools || []);
   };
 
-  const handleEditUser = (user: User) => {
+  const handleEditRoleClick = (user: User) => {
     setCurrentUserToEdit(user);
-    setIsDialogOpen(true);
+    setIsRoleDialogOpen(true);
+  };
+  
+  const handleEditUserClick = (user: User) => {
+    setCurrentUserToEdit(user);
+    setNewPassword("");
+    setIsEditUserDialogOpen(true);
   };
 
   const handleSaveRole = async () => {
@@ -72,13 +81,12 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
       toast({ variant: "destructive", title: "Error", description: "Invalid user data." });
       return;
     }
-    setIsSavingRole(true);
+    setIsSaving(true);
     try {
       const updatedUser = await updateUserRole(currentUserToEdit.id, currentUserToEdit.role, currentUser);
       if (updatedUser) {
         const updatedUsers = users.map((u) => (u.id === updatedUser.id ? updatedUser : u));
         setUsers(updatedUsers);
-        // also update selected user if it's the one being edited
         if (selectedUser && selectedUser.id === updatedUser.id) {
           setSelectedUser(updatedUser);
         }
@@ -87,17 +95,44 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
           description: "User role updated successfully.",
         });
       }
-      setIsDialogOpen(false);
-    } catch (error) {
+      setIsRoleDialogOpen(false);
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not update user role.",
+        description: error.message || "Could not update user role.",
       });
     } finally {
-      setIsSavingRole(false);
+      setIsSaving(false);
     }
   };
+
+  const handleSaveUser = async () => {
+    if (!currentUserToEdit.id) return;
+    
+    const dataToUpdate: Partial<User> = { name: currentUserToEdit.name, email: currentUserToEdit.email };
+    if (newPassword) {
+        dataToUpdate.password = newPassword;
+    }
+
+    setIsSaving(true);
+    try {
+        const updatedUser = await updateUser(currentUserToEdit.id, dataToUpdate, currentUser);
+        if (updatedUser) {
+            const updatedUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
+            setUsers(updatedUsers);
+             if (selectedUser && selectedUser.id === updatedUser.id) {
+                setSelectedUser(updatedUser);
+            }
+            toast({ title: "Success", description: "User updated successfully."});
+            setIsEditUserDialogOpen(false);
+        }
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message || "Could not update user."});
+    } finally {
+        setIsSaving(false);
+    }
+  }
   
   const handleToolToggle = (toolId: number) => {
     setAssignedTools(prev => 
@@ -116,7 +151,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
         });
         return;
     }
-    setIsSavingTools(true);
+    setIsSaving(true);
     try {
         const updatedUser = await assignToolsToUser(selectedUser.id, assignedTools, currentUser);
         if(updatedUser){
@@ -128,20 +163,21 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                 description: "Tool assignments have been updated.",
             });
         }
-    } catch (error) {
+    } catch (error: any) {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "Could not save tool assignments.",
+            description: error.message || "Could not save tool assignments.",
         });
     } finally {
-        setIsSavingTools(false);
+        setIsSaving(false);
     }
   };
 
   const enabledTools = allTools.filter(tool => tool.enabled);
 
   return (
+    <>
     <div className="grid gap-6">
       <Card>
         <CardHeader>
@@ -175,17 +211,26 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                         </TableCell>
                         <TableCell className="text-right">
                         {currentUser.role === 'Superadmin' && (
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditUser(user);
-                              }}
-                              disabled={user.id === currentUser.id}
-                          >
-                              <Pencil className="h-4 w-4" />
-                          </Button>
+                          <>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); handleEditUserClick(user); }}
+                                disabled={user.id === currentUser.id && currentUser.role !== 'Superadmin'}
+                                title="Edit User Details"
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); handleEditRoleClick(user); }}
+                                disabled={user.id === currentUser.id}
+                                title="Change User Role"
+                            >
+                                <Users className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
                         </TableCell>
                     </TableRow>
@@ -204,7 +249,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
             <CardContent>
                 <p className="mb-4 text-muted-foreground">
                     Select the tools this user can access.
-                    {selectedUser?.role === 'Admin' && " Admins have access to all tools by default."}
+                    {(selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin') && " Admins and Superadmins have access to all tools by default."}
                 </p>
                 <ScrollArea className="h-72 rounded-md border">
                     <Table>
@@ -233,17 +278,19 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                     </Table>
                 </ScrollArea>
                 <div className="flex justify-end mt-6">
-                    <Button onClick={handleSaveChanges} disabled={isSavingTools || selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}>
-                        {isSavingTools ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button onClick={handleSaveChanges} disabled={isSaving || selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Save Tool Assignments
                     </Button>
                 </div>
             </CardContent>
         </Card>
       )}
+    </div>
 
-      {currentUser.role === 'Superadmin' && (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    {currentUser.role === 'Superadmin' && (
+      <>
+        <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Edit User Role</DialogTitle>
@@ -253,7 +300,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="role" className="text-right">Role</label>
+                <Label htmlFor="role" className="text-right">Role</Label>
                 <Select
                   value={currentUserToEdit.role}
                   onValueChange={(value: Role) => setCurrentUserToEdit({ ...currentUserToEdit, role: value })}
@@ -270,14 +317,46 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" onClick={handleSaveRole} disabled={isSavingRole}>
-                {isSavingRole && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" onClick={handleSaveRole} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save changes
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      )}
-    </div>
+        
+        <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>
+                Modify the details for {currentUserToEdit.name}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">Name</Label>
+                    <Input id="name" value={currentUserToEdit.name || ""} onChange={(e) => setCurrentUserToEdit({...currentUserToEdit, name: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">Email</Label>
+                    <Input id="email" type="email" value={currentUserToEdit.email || ""} onChange={(e) => setCurrentUserToEdit({...currentUserToEdit, email: e.target.value})} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="password" className="text-right">New Password</Label>
+                    <Input id="password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="col-span-3" placeholder="Leave blank to keep current"/>
+                </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" onClick={handleSaveUser} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+    )}
+    </>
   );
 }

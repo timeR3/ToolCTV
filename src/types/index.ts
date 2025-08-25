@@ -7,6 +7,7 @@ export interface User {
   avatar: string;
   role: Role;
   assignedTools: number[]; // Array of tool IDs
+  password?: string; // Optional: only used for updates
 }
 
 export interface Tool {
