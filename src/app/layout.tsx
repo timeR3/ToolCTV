@@ -108,7 +108,11 @@ export default async function RootLayout({
           </Sidebar>
           <SidebarInset>
             <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-              <SidebarTrigger className="md:hidden" />
+               <SidebarTrigger className="md:hidden" />
+               <div className="hidden md:flex items-center gap-2">
+                <SidebarTrigger />
+                <h2 className='font-semibold'>Dashboard</h2>
+              </div>
               <div className="ml-auto flex items-center gap-4">
                 <UserNav user={user} />
               </div>
