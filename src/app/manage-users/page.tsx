@@ -8,7 +8,9 @@ import { Terminal } from "lucide-react";
 export default async function ManageUsersPage() {
   const user = await getCurrentUser();
   
-  if (user.role !== "Superadmin") {
+  const hasAccess = user.role === "Admin" || user.role === "Superadmin";
+
+  if (!hasAccess) {
     return (
       <div>
         <PageHeader title="Access Denied" />

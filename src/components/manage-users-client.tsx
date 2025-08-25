@@ -54,7 +54,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
   const { toast } = useToast();
 
   const handleSelectUser = (user: User) => {
-    if (user.role === 'Superadmin') {
+    if (user.role === 'Superadmin' && currentUser.role !== 'Superadmin') {
       setSelectedUser(null);
       return;
     }
@@ -164,7 +164,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                         key={user.id}
                         onClick={() => handleSelectUser(user)}
                         className={cn(
-                            user.role !== 'Superadmin' && "cursor-pointer",
+                            (user.role !== 'Superadmin' || currentUser.role === 'Superadmin') && "cursor-pointer",
                             selectedUser?.id === user.id && "bg-muted/50"
                         )}
                     >
@@ -174,17 +174,19 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                         <Badge variant={roleColors[user.role]}>{user.role}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditUser(user);
-                            }}
-                            disabled={user.id === currentUser.id || user.role === 'Superadmin'}
-                        >
-                            <Pencil className="h-4 w-4" />
-                        </Button>
+                        {currentUser.role === 'Superadmin' && (
+                          <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditUser(user);
+                              }}
+                              disabled={user.id === currentUser.id}
+                          >
+                              <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                         </TableCell>
                     </TableRow>
                     ))}
@@ -213,7 +215,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                                     <div className="flex items-center space-x-2">
                                         <Checkbox
                                             id={`tool-${tool.id}`}
-                                            checked={assignedTools.includes(tool.id) || selectedUser?.role === 'Admin'}
+                                            checked={assignedTools.includes(tool.id) || selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}
                                             onCheckedChange={() => handleToolToggle(tool.id)}
                                             disabled={selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}
                                         />
@@ -231,7 +233,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                     </Table>
                 </ScrollArea>
                 <div className="flex justify-end mt-6">
-                    <Button onClick={handleSaveChanges} disabled={isSavingTools || selectedUser?.role === 'Admin'}>
+                    <Button onClick={handleSaveChanges} disabled={isSavingTools || selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}>
                         {isSavingTools ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Save Tool Assignments
                     </Button>
@@ -240,40 +242,42 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
         </Card>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit User Role</DialogTitle>
-            <DialogDescription>
-              Change the role for {currentUserToEdit.name}. Click save when you're done.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="role" className="text-right">Role</label>
-              <Select
-                value={currentUserToEdit.role}
-                onValueChange={(value: Role) => setCurrentUserToEdit({ ...currentUserToEdit, role: value })}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="User">User</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Superadmin">Superadmin</SelectItem>
-                </SelectContent>
-              </Select>
+      {currentUser.role === 'Superadmin' && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit User Role</DialogTitle>
+              <DialogDescription>
+                Change the role for {currentUserToEdit.name}. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="role" className="text-right">Role</label>
+                <Select
+                  value={currentUserToEdit.role}
+                  onValueChange={(value: Role) => setCurrentUserToEdit({ ...currentUserToEdit, role: value })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="User">User</SelectItem>
+                    <SelectItem value="Admin">Admin</SelectItem>
+                    <SelectItem value="Superadmin">Superadmin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" onClick={handleSaveRole} disabled={isSavingRole}>
-              {isSavingRole && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button type="submit" onClick={handleSaveRole} disabled={isSavingRole}>
+                {isSavingRole && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

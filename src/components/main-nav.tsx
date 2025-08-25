@@ -141,12 +141,7 @@ export function MainNav({ user, tools }: MainNavProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </Link>
-          </>
-        )}
-
-        {user.role === "Superadmin" && (
-          <>
-             <Link href="/manage-users">
+            <Link href="/manage-users">
               <SidebarMenuItem>
                 <SidebarMenuButton isActive={pathname === "/manage-users"}>
                   <Users />
@@ -154,6 +149,11 @@ export function MainNav({ user, tools }: MainNavProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </Link>
+          </>
+        )}
+
+        {user.role === "Superadmin" && (
+          <>
             <Link href="/audit-log">
               <SidebarMenuItem>
                 <SidebarMenuButton
