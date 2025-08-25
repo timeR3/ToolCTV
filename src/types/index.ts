@@ -19,6 +19,7 @@ export interface Tool {
   enabled: boolean;
   category: string;
   created_by_user_id: number;
+  createdByUser?: string; // Name of the user who created the tool
 }
 
 export interface LogEntry {

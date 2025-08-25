@@ -9,11 +9,21 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export const getTools = async (): Promise<Tool[]> => {
   try {
     const rows = await query(`
-      SELECT t.*, c.name as categoryName 
+      SELECT 
+        t.*, 
+        c.name as categoryName,
+        u.name as createdByUserName
       FROM tools t
       LEFT JOIN categories c ON t.category_id = c.id
+      LEFT JOIN users u ON t.created_by_user_id = u.id
     `, []) as any[];
-    return rows.map(row => ({...row, category: row.categoryName, id: Number(row.id), created_by_user_id: Number(row.created_by_user_id) }));
+    return rows.map(row => ({
+      ...row, 
+      category: row.categoryName, 
+      id: Number(row.id), 
+      created_by_user_id: Number(row.created_by_user_id),
+      createdByUser: row.createdByUserName
+    }));
   } catch (error) {
     console.error("Failed to fetch tools:", error);
     return [];
@@ -28,9 +38,20 @@ export const addTool = async (tool: Omit<Tool, 'id' | 'category' | 'created_by_u
   ) as any;
   const newToolId = result.insertId;
   logAction(user, `Created tool: ${tool.name}`, `ID: ${newToolId}`);
-  const newToolResult = await query('SELECT t.*, c.name as categoryName FROM tools t LEFT JOIN categories c ON t.category_id = c.id WHERE t.id = ?', [newToolId]) as any[];
+  const newToolResult = await query(`
+    SELECT t.*, c.name as categoryName, u.name as createdByUserName 
+    FROM tools t 
+    LEFT JOIN categories c ON t.category_id = c.id
+    LEFT JOIN users u ON t.created_by_user_id = u.id
+    WHERE t.id = ?`, [newToolId]) as any[];
   const newTool = newToolResult[0];
-  return {...newTool, category: newTool.categoryName, id: Number(newTool.id), created_by_user_id: Number(newTool.created_by_user_id)};
+  return {
+    ...newTool, 
+    category: newTool.categoryName, 
+    id: Number(newTool.id), 
+    created_by_user_id: Number(newTool.created_by_user_id),
+    createdByUser: newTool.createdByUserName
+  };
 };
 
 export const updateTool = async (updatedTool: Tool, user: User) => {
@@ -54,9 +75,20 @@ export const updateTool = async (updatedTool: Tool, user: User) => {
         [updatedTool.name, updatedTool.description, updatedTool.url, updatedTool.icon, updatedTool.iconUrl, updatedTool.enabled, category_id, updatedTool.id]
     );
     logAction(user, `Updated tool: ${updatedTool.name}`, `Changes: ${JSON.stringify(diff(oldTool, updatedTool))}`);
-    const newToolResult = await query('SELECT t.*, c.name as categoryName FROM tools t LEFT JOIN categories c ON t.category_id = c.id WHERE t.id = ?', [updatedTool.id]) as any[];
+    const newToolResult = await query(`
+        SELECT t.*, c.name as categoryName, u.name as createdByUserName
+        FROM tools t 
+        LEFT JOIN categories c ON t.category_id = c.id 
+        LEFT JOIN users u ON t.created_by_user_id = u.id
+        WHERE t.id = ?`, [updatedTool.id]) as any[];
     const newTool = newToolResult[0];
-    return {...newTool, category: newTool.categoryName, id: Number(newTool.id), created_by_user_id: Number(newTool.created_by_user_id)};
+    return {
+        ...newTool, 
+        category: newTool.categoryName, 
+        id: Number(newTool.id), 
+        created_by_user_id: Number(newTool.created_by_user_id),
+        createdByUser: newTool.createdByUserName
+    };
   }
   return null;
 };
@@ -72,6 +104,7 @@ export const deleteTool = async (toolId: number, user: User) => {
       throw new Error("Permission Denied. You can only delete tools you created.");
     }
 
+    await query('DELETE FROM user_tools WHERE tool_id = ?', [toolId]);
     await query('DELETE FROM tools WHERE id = ?', [toolId]);
     logAction(user, `Deleted tool: ${toolToDelete.name}`, `ID: ${toolId}`);
   }

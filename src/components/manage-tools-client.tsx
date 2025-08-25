@@ -32,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { addTool, deleteTool, getCategories, updateTool } from "@/lib/data";
+import { addTool, deleteTool, getCategories, getTools, updateTool } from "@/lib/data";
 import type { Tool, User, Category } from "@/types";
 import { Loader2, Pencil, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -165,6 +165,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Created By</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -185,6 +186,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
                 <TableCell className="font-medium">{tool.name}</TableCell>
                 <TableCell className="text-muted-foreground max-w-xs truncate">{tool.description}</TableCell>
                 <TableCell>{tool.category}</TableCell>
+                <TableCell className="text-muted-foreground">{tool.createdByUser || 'N/A'}</TableCell>
                 <TableCell>{tool.enabled ? "Enabled" : "Disabled"}</TableCell>
                 <TableCell className="text-right">
                    <Button 
