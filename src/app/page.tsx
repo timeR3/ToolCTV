@@ -5,9 +5,14 @@ import { getTools, logUserAccess } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
+  if (!user) {
+    redirect('/login');
+  }
+
   await logUserAccess(user, "User logged in");
   const allTools = await getTools();
   

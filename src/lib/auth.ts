@@ -3,19 +3,49 @@
 import type { User } from '@/types';
 import { getUsers } from './data';
 import { query } from './db';
+import { cookies } from 'next/headers';
+import * as jose from 'jose';
+import { redirect } from 'next/navigation';
+import bcrypt from 'bcrypt';
 
+const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'default-secret-key-that-is-long-enough');
+const alg = 'HS256';
 
-export async function getCurrentUser(): Promise<User> {
-  // For the purpose of this app, we'll "log in" as the Superadmin.
+async function encrypt(payload: any) {
+  return await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg })
+    .setIssuedAt()
+    .setExpirationTime('24h')
+    .sign(secret);
+}
+
+async function decrypt(input: string): Promise<any> {
+    try {
+        const { payload } = await jose.jwtVerify(input, secret, {
+            algorithms: [alg],
+        });
+        return payload;
+    } catch (e) {
+        return null;
+    }
+}
+
+export async function getSession() {
+    const sessionCookie = cookies().get('session')?.value;
+    if (!sessionCookie) return null;
+    return await decrypt(sessionCookie);
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const session = await getSession();
+  if (!session?.userId) {
+    return null;
+  }
+
   try {
-    const rows = await query("SELECT * FROM users WHERE role = 'Superadmin' LIMIT 1", []) as any[];
+    const rows = await query("SELECT * FROM users WHERE id = ?", [session.userId]) as any[];
     if (rows.length === 0) {
-      // Fallback to the first user if Superadmin not found
-      const allUsers = await getUsers();
-      if (allUsers.length === 0) {
-        throw new Error("No users found in the database.");
-      }
-      return allUsers[0];
+      return null;
     }
     const userRow = rows[0];
     
@@ -30,24 +60,15 @@ export async function getCurrentUser(): Promise<User> {
 
   } catch (error) {
     console.error("Failed to fetch current user:", error);
-    // Provide a mock user to prevent crashing the app if DB connection fails
-    return {
-        id: 0,
-        name: 'Error User',
-        email: 'error@example.com',
-        avatar: '',
-        role: 'User',
-        assignedTools: [],
-    };
+    return null;
   }
 }
 
-export async function hasPermission(user: User, permissionName: string): Promise<boolean> {
+export async function hasPermission(user: User | null, permissionName: string): Promise<boolean> {
   if (!user || !user.role) {
     return false;
   }
   
-  // All permissions are now checked against the database.
   try {
     const permissionQuery = `
       SELECT COUNT(*) as count
@@ -61,4 +82,44 @@ export async function hasPermission(user: User, permissionName: string): Promise
     console.error(`Failed to check permission '${permissionName}' for user '${user.id}':`, error);
     return false;
   }
+}
+
+
+export async function login(prevState: { error: string } | undefined, formData: FormData) {
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    if (!email || !password) {
+        return { error: 'Email and password are required.' };
+    }
+
+    try {
+        const users = await query('SELECT * FROM users WHERE email = ?', [email]) as any[];
+        if (users.length === 0) {
+            return { error: 'Invalid email or password.' };
+        }
+        const user = users[0];
+
+        const passwordsMatch = await bcrypt.compare(password, user.password);
+
+        if (!passwordsMatch) {
+            return { error: 'Invalid email or password.' };
+        }
+
+        const session = { userId: user.id, email: user.email, role: user.role };
+        const sessionCookie = await encrypt(session);
+
+        cookies().set('session', sessionCookie, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 60 * 60 * 24 });
+
+        return redirect('/');
+
+    } catch (error) {
+        console.error('Login error:', error);
+        return { error: 'An internal error occurred. Please try again.' };
+    }
+}
+
+export async function logout() {
+    cookies().set('session', '', { expires: new Date(0) });
+    redirect('/login');
 }

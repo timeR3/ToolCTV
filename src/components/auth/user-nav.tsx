@@ -16,9 +16,23 @@ import {
 import type { User as UserType } from "@/types"
 import { LogOut, User as UserIcon } from "lucide-react"
 import Link from "next/link"
+import { logout } from "@/lib/auth"
 
 interface UserNavProps {
   user: UserType
+}
+
+function LogoutAction() {
+    return (
+        <form action={logout} className="w-full">
+            <button type="submit" className="w-full">
+                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <LogOut />
+                    Log out
+                </DropdownMenuItem>
+            </button>
+        </form>
+    )
 }
 
 export function UserNav({ user }: UserNavProps) {
@@ -51,10 +65,7 @@ export function UserNav({ user }: UserNavProps) {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-            <LogOut />
-            Log out
-        </DropdownMenuItem>
+        <LogoutAction />
       </DropdownMenuContent>
     </DropdownMenu>
   )

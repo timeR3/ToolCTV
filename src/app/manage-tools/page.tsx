@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 
 export default async function ManageToolsPage() {
   const user = await getCurrentUser();
+  if (!user) {
+    redirect('/login');
+  }
   
   if (!(await hasPermission(user, 'access_manage_tools'))) {
     redirect("/");

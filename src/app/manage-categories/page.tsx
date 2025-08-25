@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 
 export default async function ManageCategoriesPage() {
   const user = await getCurrentUser();
+  if (!user) {
+    redirect('/login');
+  }
   
   if (!(await hasPermission(user, 'access_manage_categories'))) {
     redirect("/");

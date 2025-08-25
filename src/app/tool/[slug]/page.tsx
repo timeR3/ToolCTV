@@ -1,12 +1,16 @@
 import { PageHeader } from "@/components/page-header";
 import { getTools, logUserAccess } from "@/lib/data";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function ToolPage({ params }: { params: { slug: string } }) {
   const user = await getCurrentUser();
+  if (!user) {
+    redirect('/login');
+  }
+  
   const tools = await getTools();
   const toolId = parseInt(params.slug, 10);
   const tool = tools.find((t) => t.id === toolId);
