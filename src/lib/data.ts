@@ -2,7 +2,7 @@
 // This file acts as a mock in-memory database.
 import type { Tool, LogEntry, User, Category, Role, Permission } from "@/types";
 import { query } from './db';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const SALT_ROUNDS = 10;
 

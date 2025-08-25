@@ -6,7 +6,7 @@ import { query } from './db';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
 import { redirect } from 'next/navigation';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'default-secret-key-that-is-long-enough');
 const alg = 'HS256';
