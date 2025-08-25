@@ -154,10 +154,15 @@ export const updateUserRole = async (userId: string, role: Role, admin: User): P
     }
     try {
         await query('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
-        const updatedUser = (await query('SELECT * FROM users WHERE id = ?', [userId])) as User[];
-        if (updatedUser.length > 0) {
-            logAction(admin, `Updated role for ${updatedUser[0].name} to ${role}`, `User ID: ${userId}`);
-            return updatedUser[0];
+        const updatedUserResult = await query('SELECT * FROM users WHERE id = ?', [userId]) as any[];
+        const updatedUser = updatedUserResult[0];
+        
+        if (updatedUser) {
+            logAction(admin, `Updated role for ${updatedUser.name} to ${role}`, `User ID: ${userId}`);
+            // Fetch assigned tools for the user to return a complete User object
+            const assignedToolsResult = await query('SELECT tool_id FROM user_tools WHERE user_id = ?', [userId]) as any[];
+            updatedUser.assignedTools = assignedToolsResult.map((row: any) => row.tool_id);
+            return updatedUser;
         }
         return null;
     } catch (error) {
@@ -191,11 +196,21 @@ export const deleteCategory = async (categoryId: string, user: User) => {
 
 export const getUsers = async (): Promise<User[]> => {
   try {
-    const rows = await query('SELECT * FROM users', []) as any[];
-    // The mysql2 driver can parse JSON columns automatically.
-    // If assignedTools is a TEXT column storing a JSON string, you might need to parse it manually:
-    // return rows.map(row => ({ ...row, assignedTools: JSON.parse(row.assignedTools || '[]') }));
-    return rows as User[];
+    const usersQuery = `
+      SELECT u.*, JSON_ARRAYAGG(ut.tool_id) as assignedTools
+      FROM users u
+      LEFT JOIN user_tools ut ON u.id = ut.user_id
+      GROUP BY u.id
+    `;
+    const rows = await query(usersQuery, []) as any[];
+
+    // Handle the case where a user has no tools, JSON_ARRAYAGG might return [null]
+    return rows.map(row => {
+      if (row.assignedTools && row.assignedTools.length === 1 && row.assignedTools[0] === null) {
+        row.assignedTools = [];
+      }
+      return row;
+    }) as User[];
   } catch (error) {
     console.error("Failed to fetch users:", error);
     return []; // Return an empty array on error to prevent crashes.
@@ -207,14 +222,26 @@ export const assignToolsToUser = async (userId: string, toolIds: string[], admin
         throw new Error('Only Admins and Superadmins can assign tools.');
     }
     try {
-        // We need to stringify the array to store it in the JSON column
-        const toolsJson = JSON.stringify(toolIds);
-        await query('UPDATE users SET assignedTools = ? WHERE id = ?', [toolsJson, userId]);
+        // Start a transaction to ensure atomicity
+        // For simplicity, we'll just delete and then insert.
+        // A more complex implementation could use transactions.
         
-        const updatedUserRows = await query('SELECT * FROM users WHERE id = ?', [userId]) as any[];
-        if (updatedUserRows.length > 0) {
-            const updatedUser = updatedUserRows[0] as User;
+        // 1. Delete all existing assignments for the user
+        await query('DELETE FROM user_tools WHERE user_id = ?', [userId]);
+
+        // 2. Insert new assignments
+        if (toolIds.length > 0) {
+            const values = toolIds.map(toolId => [userId, toolId]);
+            await query('INSERT INTO user_tools (user_id, tool_id) VALUES ?', [values]);
+        }
+        
+        const updatedUserResult = await query('SELECT * FROM users WHERE id = ?', [userId]) as any[];
+        const updatedUser = updatedUserResult[0];
+
+        if (updatedUser) {
             logAction(admin, `Assigned tools to ${updatedUser.name}`, `Tool IDs: ${toolIds.join(', ')}`);
+             const assignedToolsResult = await query('SELECT tool_id FROM user_tools WHERE user_id = ?', [userId]) as any[];
+            updatedUser.assignedTools = assignedToolsResult.map((row: any) => row.tool_id);
             return updatedUser;
         }
         return null;
