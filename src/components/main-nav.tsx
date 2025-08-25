@@ -153,18 +153,16 @@ export function MainNav({ user, tools }: MainNavProps) {
         )}
 
         {user.role === "Superadmin" && (
-          <>
-            <Link href="/audit-log">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname.startsWith("/audit-log")}
-                >
-                  <FileClock />
-                  <span>Audit Log</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </Link>
-          </>
+          <Link href="/audit-log">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname.startsWith("/audit-log")}
+              >
+                <FileClock />
+                <span>Audit Log</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </Link>
         )}
       </SidebarGroup>
     </SidebarMenu>
