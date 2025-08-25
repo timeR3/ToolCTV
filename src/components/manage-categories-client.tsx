@@ -173,6 +173,7 @@ export function ManageCategoriesClient({ initialCategories, user }: ManageCatego
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDeleteClick(category)}
+                    disabled={category.name === 'General'}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>

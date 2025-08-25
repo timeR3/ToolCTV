@@ -8,9 +8,10 @@ import { getCurrentUser } from "@/lib/auth";
 export default async function ToolPage({ params }: { params: { slug: string } }) {
   const user = await getCurrentUser();
   const tools = await getTools();
-  const tool = tools.find((t) => t.id === params.slug);
+  const toolId = parseInt(params.slug, 10);
+  const tool = tools.find((t) => t.id === toolId);
 
-  if (!tool) {
+  if (!tool || isNaN(toolId)) {
     notFound();
   }
 
@@ -49,6 +50,6 @@ export async function generateStaticParams() {
   const tools = await getTools();
  
   return tools.map((tool) => ({
-    slug: tool.id,
+    slug: tool.id.toString(),
   }));
 }

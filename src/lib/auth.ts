@@ -1,6 +1,6 @@
 'use server';
 
-import type { User, Role } from '@/types';
+import type { User } from '@/types';
 import { getUsers } from './data';
 import { query } from './db';
 
@@ -17,19 +17,22 @@ export async function getCurrentUser(): Promise<User> {
       }
       return allUsers[0];
     }
-    const user = rows[0] as User;
-    user.assignedTools = []; // Initialize as empty array
+    const userRow = rows[0];
     
-    const assignedToolsResult = await query('SELECT tool_id FROM user_tools WHERE user_id = ?', [user.id]) as any[];
-    if (assignedToolsResult.length > 0) {
-        user.assignedTools = assignedToolsResult.map((row: any) => row.tool_id);
-    }
-    return user;
+    const assignedToolsResult = await query('SELECT tool_id FROM user_tools WHERE user_id = ?', [userRow.id]) as any[];
+    const assignedTools = assignedToolsResult.map((row: any) => Number(row.tool_id));
+    
+    return {
+      ...userRow,
+      id: Number(userRow.id),
+      assignedTools,
+    };
+
   } catch (error) {
     console.error("Failed to fetch current user:", error);
     // Provide a mock user to prevent crashing the app if DB connection fails
     return {
-        id: 'error-user',
+        id: 0,
         name: 'Error User',
         email: 'error@example.com',
         avatar: '',

@@ -66,7 +66,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
   }, []);
 
   const handleNewTool = () => {
-    setCurrentTool({ category: categories[0]?.name || "General" });
+    setCurrentTool({ category: categories[0]?.name || "General", enabled: true, icon: "Wrench" });
     setIsDialogOpen(true);
   };
 
@@ -95,6 +95,17 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
   }
 
   const handleSave = async () => {
+    if (!currentTool.name || !currentTool.url) {
+        toast({ variant: "destructive", title: "Error", description: "Tool name and URL cannot be empty." });
+        return;
+    }
+    
+    const selectedCategory = categories.find(c => c.name === currentTool.category);
+    if (!selectedCategory) {
+        toast({ variant: "destructive", title: "Error", description: "Please select a valid category." });
+        return;
+    }
+
     setIsSaving(true);
     try {
       if (currentTool.id) {
@@ -113,7 +124,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             icon: currentTool.icon || "Wrench",
             iconUrl: currentTool.iconUrl,
             enabled: currentTool.enabled ?? false,
-            category: currentTool.category || (categories[0]?.name || "General"),
+            category_id: selectedCategory.id
         }, user);
         setTools([newTool, ...tools]);
         toast({ title: "Success", description: "Tool added successfully." });

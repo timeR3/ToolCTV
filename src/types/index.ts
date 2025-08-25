@@ -1,16 +1,16 @@
 export type Role = "User" | "Admin" | "Superadmin";
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
   avatar: string;
   role: Role;
-  assignedTools: string[]; // Array of tool IDs
+  assignedTools: number[]; // Array of tool IDs
 }
 
 export interface Tool {
-  id:string;
+  id: number;
   name: string;
   description: string;
   url: string;
@@ -21,7 +21,7 @@ export interface Tool {
 }
 
 export interface LogEntry {
-  id: string;
+  id: number;
   timestamp: Date;
   adminName: string;
   action: string;
@@ -29,7 +29,7 @@ export interface LogEntry {
 }
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
   description: string;
   enabled: boolean;
@@ -38,7 +38,7 @@ export interface Category {
 }
 
 export interface Permission {
-  id: string;
+  id: number;
   name: string;
   description: string;
 }

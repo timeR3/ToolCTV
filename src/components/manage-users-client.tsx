@@ -44,7 +44,7 @@ const roleColors: Record<Role, "default" | "secondary" | "destructive"> = {
 export function ManageUsersClient({ initialUsers, currentUser, allTools }: ManageUsersClientProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [assignedTools, setAssignedTools] = useState<string[]>([]);
+  const [assignedTools, setAssignedTools] = useState<number[]>([]);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSavingRole, setIsSavingRole] = useState(false);
@@ -99,7 +99,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
     }
   };
   
-  const handleToolToggle = (toolId: string) => {
+  const handleToolToggle = (toolId: number) => {
     setAssignedTools(prev => 
       prev.includes(toolId) 
         ? prev.filter(id => id !== toolId)
