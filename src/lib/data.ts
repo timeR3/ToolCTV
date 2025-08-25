@@ -405,3 +405,33 @@ export const updateRolePermission = async (role: Role, permissionId: number, has
         throw new Error('Database error while updating permission.');
     }
 }
+
+export async function registerUser(formData: FormData) {
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    if (!name || !email || !password) {
+        return { error: 'All fields are required.' };
+    }
+
+    try {
+        const existingUsers = await query('SELECT * FROM users WHERE email = ?', [email]) as any[];
+        if (existingUsers.length > 0) {
+            return { error: 'A user with this email already exists.' };
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        await query(
+            'INSERT INTO users (name, email, password, role, avatar) VALUES (?, ?, ?, ?, ?)',
+            [name, email, hashedPassword, 'User', '']
+        );
+
+        return { success: true };
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        return { error: 'An internal error occurred. Please try again.' };
+    }
+}

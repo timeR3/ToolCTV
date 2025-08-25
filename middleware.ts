@@ -6,8 +6,8 @@ export async function middleware(request: NextRequest) {
   const session = await getSession();
   const { pathname } = request.nextUrl;
 
-  // Allow requests to /login and public assets
-  if (pathname.startsWith('/login') || pathname.startsWith('/_next') || pathname.startsWith('/static')) {
+  // Allow requests to /login, /register, and public assets
+  if (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/_next') || pathname.startsWith('/static')) {
     return NextResponse.next();
   }
 
