@@ -53,7 +53,7 @@ export function MainNav({ user, userTools, allCategories, permissions }: MainNav
     <SidebarMenu>
       <Link href="/">
         <SidebarMenuItem>
-          <SidebarMenuButton isActive={pathname === "/"}>
+          <SidebarMenuButton isActive={pathname === "/"} tooltip="Dashboard">
             <LayoutDashboard />
             <span>Dashboard</span>
           </SidebarMenuButton>
@@ -84,6 +84,7 @@ export function MainNav({ user, userTools, allCategories, permissions }: MainNav
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     isActive={pathname === `/tool/${tool.id}`}
+                    tooltip={tool.name}
                   >
                     <Avatar className="h-5 w-5 rounded-sm">
                       {tool.iconUrl ? (
@@ -108,7 +109,7 @@ export function MainNav({ user, userTools, allCategories, permissions }: MainNav
         <SidebarGroupLabel>Settings</SidebarGroupLabel>
         <Link href="/profile">
           <SidebarMenuItem>
-            <SidebarMenuButton isActive={pathname === "/profile"}>
+            <SidebarMenuButton isActive={pathname === "/profile"} tooltip="Profile">
               <UserIcon />
               <span>Profile</span>
             </SidebarMenuButton>
@@ -118,7 +119,7 @@ export function MainNav({ user, userTools, allCategories, permissions }: MainNav
         {permissions.canManageUsers && (
             <Link href="/manage-users">
               <SidebarMenuItem>
-                <SidebarMenuButton isActive={pathname === "/manage-users"}>
+                <SidebarMenuButton isActive={pathname === "/manage-users"} tooltip="Manage Users">
                   <Users />
                   <span>Manage Users</span>
                 </SidebarMenuButton>
@@ -131,7 +132,7 @@ export function MainNav({ user, userTools, allCategories, permissions }: MainNav
             {permissions.canManageTools && (
                <Link href="/manage-tools">
                 <SidebarMenuItem>
-                  <SidebarMenuButton isActive={pathname === "/manage-tools"}>
+                  <SidebarMenuButton isActive={pathname === "/manage-tools"} tooltip="Manage Tools">
                     <Wrench />
                     <span>Manage Tools</span>
                   </SidebarMenuButton>
@@ -141,7 +142,7 @@ export function MainNav({ user, userTools, allCategories, permissions }: MainNav
             {permissions.canManageCategories && (
               <Link href="/manage-categories">
                 <SidebarMenuItem>
-                  <SidebarMenuButton isActive={pathname === "/manage-categories"}>
+                  <SidebarMenuButton isActive={pathname === "/manage-categories"} tooltip="Manage Categories">
                     <Shapes />
                     <span>Manage Categories</span>
                   </SidebarMenuButton>
@@ -151,7 +152,7 @@ export function MainNav({ user, userTools, allCategories, permissions }: MainNav
              {permissions.canManagePermissions && (
               <Link href="/manage-permissions">
                 <SidebarMenuItem>
-                  <SidebarMenuButton isActive={pathname === "/manage-permissions"}>
+                  <SidebarMenuButton isActive={pathname === "/manage-permissions"} tooltip="Manage Permissions">
                     <ShieldCheck />
                     <span>Manage Permissions</span>
                   </SidebarMenuButton>
@@ -163,6 +164,7 @@ export function MainNav({ user, userTools, allCategories, permissions }: MainNav
                   <SidebarMenuItem>
                   <SidebarMenuButton
                       isActive={pathname.startsWith("/audit-log")}
+                      tooltip="Audit Log"
                   >
                       <FileClock />
                       <span>Audit Log</span>

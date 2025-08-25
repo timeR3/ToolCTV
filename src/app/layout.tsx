@@ -12,6 +12,7 @@ import {
   SidebarFooter,
   SidebarInset,
   SidebarTrigger,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/logo";
 import { UserNav } from "@/components/auth/user-nav";
@@ -92,6 +93,7 @@ export default async function RootLayout({
       <body className="font-body antialiased">
         <SidebarProvider>
           <Sidebar collapsible="icon" className="bg-sidebar">
+            <SidebarRail />
             <SidebarHeader>
               <Logo />
             </SidebarHeader>
@@ -106,7 +108,7 @@ export default async function RootLayout({
           </Sidebar>
           <SidebarInset>
             <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-              <SidebarTrigger className="md:hidden" />
+              <SidebarTrigger />
               <div className="ml-auto flex items-center gap-4">
                 <UserNav user={user} />
               </div>
