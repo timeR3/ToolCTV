@@ -99,9 +99,11 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
     }
   };
   
-  const handleToolToggle = (toolId: string, checked: boolean) => {
+  const handleToolToggle = (toolId: string) => {
     setAssignedTools(prev => 
-      checked ? [...prev, toolId] : prev.filter(id => id !== toolId)
+      prev.includes(toolId) 
+        ? prev.filter(id => id !== toolId)
+        : [...prev, toolId]
     );
   };
   
@@ -209,7 +211,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                             <Checkbox
                                 id={`tool-${tool.id}`}
                                 checked={assignedTools.includes(tool.id) || selectedUser?.role === 'Admin'}
-                                onCheckedChange={(checked) => handleToolToggle(tool.id, !!checked)}
+                                onCheckedChange={() => handleToolToggle(tool.id)}
                                 disabled={selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}
                             />
                             <label
