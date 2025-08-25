@@ -110,8 +110,10 @@ export default async function RootLayout({
             <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
               <div className="flex items-center gap-2">
                 <SidebarTrigger className="md:hidden" />
-                <SidebarTrigger />
-                <h2 className='hidden md:block font-semibold'>Dashboard</h2>
+                <div className="hidden md:flex items-center gap-2">
+                    <SidebarTrigger />
+                    <h2 className='font-semibold'>Dashboard</h2>
+                </div>
               </div>
               <div className="ml-auto flex items-center gap-4">
                 <UserNav user={user} />
