@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/page-header";
 import { getTools, logUserAccess } from "@/lib/data";
 import { notFound, redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Terminal, ShieldAlert } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function ToolPage({ params }: { params: { slug: string } }) {
@@ -18,6 +18,26 @@ export default async function ToolPage({ params }: { params: { slug: string } })
   if (!tool || isNaN(toolId)) {
     notFound();
   }
+
+  // --- PERMISSION CHECK ---
+  const hasAccess = user.role === 'Superadmin' || 
+                    user.role === 'Admin' || 
+                    (user.assignedTools && user.assignedTools.includes(tool.id));
+
+  if (!hasAccess) {
+    return (
+       <div className="container mx-auto py-10">
+        <Alert variant="destructive">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Access Denied</AlertTitle>
+          <AlertDescription>
+            You do not have permission to access this tool. Please contact an administrator.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+  // -------------------------
 
   await logUserAccess(user, `Accessed tool: ${tool.name}`, `Tool ID: ${tool.id}`);
 
