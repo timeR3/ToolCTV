@@ -46,15 +46,8 @@ function LoginButton() {
 }
 
 export function LoginForm() {
-  const [state, formAction] = useActionState(login, undefined);
+  const [state, formAction, isPending] = useActionState(login, undefined);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (state?.error) {
-       // The alert in the form is now the primary feedback mechanism
-    }
-  }, [state, toast]);
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -92,7 +85,10 @@ export function LoginForm() {
                     </Alert>
                 )}
             </div>
-          <LoginButton />
+            <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Log in
+            </Button>
         </form>
       </CardContent>
     </Card>
