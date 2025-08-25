@@ -1,13 +1,14 @@
 import { getCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getTools } from "@/lib/data";
+import { getTools, logUserAccess } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
+  await logUserAccess(user, "User logged in");
   const allTools = await getTools();
   
   const enabledTools = allTools.filter(t => t.enabled);

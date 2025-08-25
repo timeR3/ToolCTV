@@ -101,7 +101,7 @@ export const deleteTool = async (toolId: string, user: User) => {
 
 export const getLogs = async () => {
   await sleep(200);
-  return [...logs];
+  return [...logs].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 };
 
 const logAction = (user: User, action: string, details: string) => {
@@ -114,6 +114,18 @@ const logAction = (user: User, action: string, details: string) => {
   };
   logs.unshift(newLog);
 };
+
+export const logUserAccess = async (user: User, action: string, details: string = "") => {
+    await sleep(50);
+    const newLog: LogEntry = {
+        id: `l${Date.now()}`,
+        timestamp: new Date(),
+        adminName: user.name,
+        action,
+        details,
+    };
+    logs.unshift(newLog);
+}
 
 // Helper to find differences between two objects for logging
 const diff = (obj1: any, obj2: any) => {
