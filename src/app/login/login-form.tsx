@@ -51,11 +51,7 @@ export function LoginForm() {
 
   useEffect(() => {
     if (state?.error) {
-       toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: state.error,
-      });
+       // The alert in the form is now the primary feedback mechanism
     }
   }, [state, toast]);
 
