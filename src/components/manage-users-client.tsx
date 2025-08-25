@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { assignToolsToUser, updateUser, updateUserRole } from "@/lib/data";
 import type { User, Role, Tool } from "@/types";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Badge } from "./ui/badge";
