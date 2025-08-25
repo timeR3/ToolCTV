@@ -1,12 +1,16 @@
 'use server';
 // This file acts as a mock in-memory database.
 import type { Tool, LogEntry, User, Category } from "@/types";
+import { query } from './db';
 
+// In-memory data is now being replaced by MySQL queries.
+/*
 let users: User[] = [
     { id: 'user-1', name: 'Admin User', email: 'admin@toolbox.pro', avatar: 'https://placehold.co/100x100.png', role: 'Superadmin', assignedTools: [] },
     { id: 'user-2', name: 'Jane Doe', email: 'jane.doe@example.com', avatar: 'https://placehold.co/100x100.png', role: 'Admin', assignedTools: [] },
     { id: 'user-3', name: 'John Smith', email: 'john.smith@example.com', avatar: 'https://placehold.co/100x100.png', role: 'User', assignedTools: [] },
 ]
+*/
 
 let tools: Tool[] = [
   {
@@ -152,14 +156,8 @@ export const addCategory = async (category: Omit<Category, 'id'>, user: User) =>
 }
 
 export const updateUserRole = async (userId: string, role: User['role'], admin: User) => {
-    await sleep(100);
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex !== -1) {
-        const oldRole = users[userIndex].role;
-        users[userIndex].role = role;
-        logAction(admin, `Updated user role: ${users[userIndex].name}`, `Role changed from ${oldRole} to ${role}`);
-        return users[userIndex];
-    }
+    // This function will be updated later to use the database.
+    console.log("updateUserRole needs to be migrated to SQL");
     return null;
 }
 
@@ -187,19 +185,20 @@ export const deleteCategory = async (categoryId: string, user: User) => {
 }
 
 export const getUsers = async (): Promise<User[]> => {
-    await sleep(100);
-    return [...users];
+  try {
+    const rows = await query('SELECT * FROM users', []) as any[];
+    // The mysql2 driver can parse JSON columns automatically.
+    // If assignedTools is a TEXT column storing a JSON string, you might need to parse it manually:
+    // return rows.map(row => ({ ...row, assignedTools: JSON.parse(row.assignedTools || '[]') }));
+    return rows as User[];
+  } catch (error) {
+    console.error("Failed to fetch users:", error);
+    return []; // Return an empty array on error to prevent crashes.
+  }
 }
 
 export const assignToolsToUser = async (userId: string, toolIds: string[], admin: User) => {
-    await sleep(100);
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex !== -1) {
-        const user = users[userIndex];
-        const oldTools = user.assignedTools;
-        user.assignedTools = toolIds;
-        logAction(admin, `Assigned tools to ${user.name}`, `From [${oldTools.join(', ')}] to [${toolIds.join(', ')}]`);
-        return user;
-    }
+    // This function will be updated later to use the database.
+    console.log("assignToolsToUser needs to be migrated to SQL");
     return null;
 }
