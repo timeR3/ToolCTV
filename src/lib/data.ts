@@ -1,16 +1,9 @@
 'use server';
 // This file acts as a mock in-memory database.
-import type { Tool, LogEntry, User, Category } from "@/types";
+import type { Tool, LogEntry, User, Category, Role } from "@/types";
 import { query } from './db';
 
 // In-memory data is now being replaced by MySQL queries.
-/*
-let users: User[] = [
-    { id: 'user-1', name: 'Admin User', email: 'admin@toolbox.pro', avatar: 'https://placehold.co/100x100.png', role: 'Superadmin', assignedTools: [] },
-    { id: 'user-2', name: 'Jane Doe', email: 'jane.doe@example.com', avatar: 'https://placehold.co/100x100.png', role: 'Admin', assignedTools: [] },
-    { id: 'user-3', name: 'John Smith', email: 'john.smith@example.com', avatar: 'https://placehold.co/100x100.png', role: 'User', assignedTools: [] },
-]
-*/
 
 let tools: Tool[] = [
   {
@@ -155,10 +148,22 @@ export const addCategory = async (category: Omit<Category, 'id'>, user: User) =>
     return newCategory;
 }
 
-export const updateUserRole = async (userId: string, role: User['role'], admin: User) => {
-    // This function will be updated later to use the database.
-    console.log("updateUserRole needs to be migrated to SQL");
-    return null;
+export const updateUserRole = async (userId: string, role: Role, admin: User): Promise<User | null> => {
+    if (admin.role !== 'Superadmin') {
+        throw new Error('Only Superadmins can change user roles.');
+    }
+    try {
+        await query('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
+        const updatedUser = (await query('SELECT * FROM users WHERE id = ?', [userId])) as User[];
+        if (updatedUser.length > 0) {
+            logAction(admin, `Updated role for ${updatedUser[0].name} to ${role}`, `User ID: ${userId}`);
+            return updatedUser[0];
+        }
+        return null;
+    } catch (error) {
+        console.error("Failed to update user role:", error);
+        throw new Error('Database error while updating user role.');
+    }
 }
 
 export const updateCategory = async (updatedCategory: Category, user: User) => {
@@ -197,8 +202,24 @@ export const getUsers = async (): Promise<User[]> => {
   }
 }
 
-export const assignToolsToUser = async (userId: string, toolIds: string[], admin: User) => {
-    // This function will be updated later to use the database.
-    console.log("assignToolsToUser needs to be migrated to SQL");
-    return null;
+export const assignToolsToUser = async (userId: string, toolIds: string[], admin: User): Promise<User | null> => {
+    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') {
+        throw new Error('Only Admins and Superadmins can assign tools.');
+    }
+    try {
+        // We need to stringify the array to store it in the JSON column
+        const toolsJson = JSON.stringify(toolIds);
+        await query('UPDATE users SET assignedTools = ? WHERE id = ?', [toolsJson, userId]);
+        
+        const updatedUserRows = await query('SELECT * FROM users WHERE id = ?', [userId]) as any[];
+        if (updatedUserRows.length > 0) {
+            const updatedUser = updatedUserRows[0] as User;
+            logAction(admin, `Assigned tools to ${updatedUser.name}`, `Tool IDs: ${toolIds.join(', ')}`);
+            return updatedUser;
+        }
+        return null;
+    } catch (error) {
+        console.error("Failed to assign tools to user:", error);
+        throw new Error('Database error while assigning tools.');
+    }
 }
