@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -34,16 +34,6 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
-
-function LoginButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-      Log in
-    </Button>
-  );
-}
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(login, undefined);

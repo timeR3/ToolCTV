@@ -15,8 +15,10 @@ const pool = mysql.createPool({
 });
 
 export async function query(sql: string, params: any[]) {
+  let connection;
   try {
-    const [rows] = await pool.execute(sql, params);
+    connection = await pool.getConnection();
+    const [rows] = await connection.execute(sql, params);
     return rows;
   } catch (error: any) {
     // Intercept database errors to provide more helpful feedback.
@@ -30,5 +32,7 @@ export async function query(sql: string, params: any[]) {
     }
     // Re-throw other errors
     throw error;
+  } finally {
+    if (connection) connection.release();
   }
 }
