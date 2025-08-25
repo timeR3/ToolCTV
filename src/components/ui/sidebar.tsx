@@ -264,6 +264,15 @@ const SidebarTrigger = React.forwardRef<
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <Button
@@ -556,6 +565,11 @@ const SidebarMenuButton = React.forwardRef<
   ) => {
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+      setIsMounted(true);
+    }, []);
 
     const button = (
       <Comp
@@ -570,7 +584,7 @@ const SidebarMenuButton = React.forwardRef<
       </Comp>
     )
 
-    if (!tooltip) {
+    if (!tooltip || !isMounted) {
       return button
     }
 
