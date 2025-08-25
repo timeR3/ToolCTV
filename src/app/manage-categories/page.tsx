@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { ManageCategoriesClient } from "@/components/manage-categories-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export default async function ManageCategoriesPage() {
   const user = await getCurrentUser();
@@ -12,18 +13,7 @@ export default async function ManageCategoriesPage() {
   const hasAccess = user.role === "Admin" || user.role === "Superadmin";
 
   if (!hasAccess) {
-    return (
-      <div>
-        <PageHeader title="Access Denied" />
-        <Alert variant="destructive">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Forbidden</AlertTitle>
-          <AlertDescription>
-            You do not have the required permissions to access this page.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    redirect("/");
   }
 
   return (

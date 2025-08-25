@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { ManageUsersClient } from "@/components/manage-users-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export default async function ManageUsersPage() {
   const user = await getCurrentUser();
@@ -11,18 +12,7 @@ export default async function ManageUsersPage() {
   const hasAccess = user.role === "Admin" || user.role === "Superadmin";
 
   if (!hasAccess) {
-    return (
-      <div>
-        <PageHeader title="Access Denied" />
-        <Alert variant="destructive">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Forbidden</AlertTitle>
-          <AlertDescription>
-            You do not have the required permissions to access this page.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    redirect("/");
   }
   
   const users = await getUsers();
