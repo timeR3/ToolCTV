@@ -1,40 +1,11 @@
 'use server';
 
 import type { User } from '@/types';
-import { getUsers } from './data';
 import { query } from './db';
 import { cookies } from 'next/headers';
-import * as jose from 'jose';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
-
-const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'default-secret-key-that-is-long-enough');
-const alg = 'HS256';
-
-async function encrypt(payload: any) {
-  return await new jose.SignJWT(payload)
-    .setProtectedHeader({ alg })
-    .setIssuedAt()
-    .setExpirationTime('24h')
-    .sign(secret);
-}
-
-async function decrypt(input: string): Promise<any> {
-    try {
-        const { payload } = await jose.jwtVerify(input, secret, {
-            algorithms: [alg],
-        });
-        return payload;
-    } catch (e) {
-        return null;
-    }
-}
-
-export async function getSession() {
-    const sessionCookie = cookies().get('session')?.value;
-    if (!sessionCookie) return null;
-    return await decrypt(sessionCookie);
-}
+import { getSession, encrypt } from './auth-session';
 
 export async function getCurrentUser(): Promise<User | null> {
   const session = await getSession();
@@ -83,7 +54,6 @@ export async function hasPermission(user: User | null, permissionName: string): 
     return false;
   }
 }
-
 
 export async function login(prevState: { error: string } | undefined, formData: FormData) {
     const email = formData.get('email') as string;

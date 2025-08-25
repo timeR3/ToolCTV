@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
-import { getCurrentUser, hasPermission } from "@/lib/auth";
+import { getCurrentUser, hasPermission } from "@/lib/auth-db";
 import { getCategories, getTools } from "@/lib/data";
 import {
   SidebarProvider,

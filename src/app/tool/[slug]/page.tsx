@@ -3,7 +3,7 @@ import { getTools, logUserAccess } from "@/lib/data";
 import { notFound, redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, ShieldAlert } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth-db";
 
 export default async function ToolPage({ params }: { params: { slug: string } }) {
   const user = await getCurrentUser();

@@ -1,4 +1,4 @@
-import { getCurrentUser, hasPermission } from "@/lib/auth";
+import { getCurrentUser, hasPermission } from "@/lib/auth-db";
 import { getCategories } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { ManageCategoriesClient } from "@/components/manage-categories-client";

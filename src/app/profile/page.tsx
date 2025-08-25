@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth-db";
 import { PageHeader } from "@/components/page-header";
 import { ProfileForm } from "@/components/profile-form";
 import { redirect } from "next/navigation";

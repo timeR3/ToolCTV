@@ -16,7 +16,7 @@ import {
 import type { User as UserType } from "@/types"
 import { LogOut, User as UserIcon } from "lucide-react"
 import Link from "next/link"
-import { logout } from "@/lib/auth"
+import { logout } from "@/lib/auth-db"
 
 interface UserNavProps {
   user: UserType

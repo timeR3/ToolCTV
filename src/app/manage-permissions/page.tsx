@@ -1,4 +1,4 @@
-import { getCurrentUser, hasPermission } from "@/lib/auth";
+import { getCurrentUser, hasPermission } from "@/lib/auth-db";
 import { getAllPermissions, getRolePermissions } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { ManagePermissionsClient } from "@/components/manage-permissions-client";
