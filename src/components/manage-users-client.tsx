@@ -142,7 +142,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
   const enabledTools = allTools.filter(tool => tool.enabled);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="grid gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
             <CardTitle>Users</CardTitle>
@@ -204,25 +204,31 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                     Select the tools this user can access.
                     {selectedUser?.role === 'Admin' && " Admins have access to all tools by default."}
                 </p>
-                <ScrollArea className="h-72">
-                    <div className="grid gap-4">
-                        {enabledTools.map(tool => (
-                        <div key={tool.id} className="flex items-center space-x-2">
-                            <Checkbox
-                                id={`tool-${tool.id}`}
-                                checked={assignedTools.includes(tool.id) || selectedUser?.role === 'Admin'}
-                                onCheckedChange={() => handleToolToggle(tool.id)}
-                                disabled={selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}
-                            />
-                            <label
-                                htmlFor={`tool-${tool.id}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                {tool.name}
-                            </label>
-                        </div>
-                        ))}
-                    </div>
+                <ScrollArea className="h-72 rounded-md border">
+                    <Table>
+                        <TableBody>
+                            {enabledTools.map(tool => (
+                            <TableRow key={tool.id}>
+                                <TableCell>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`tool-${tool.id}`}
+                                            checked={assignedTools.includes(tool.id) || selectedUser?.role === 'Admin'}
+                                            onCheckedChange={() => handleToolToggle(tool.id)}
+                                            disabled={selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}
+                                        />
+                                        <label
+                                            htmlFor={`tool-${tool.id}`}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            {tool.name}
+                                        </label>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </ScrollArea>
                 <div className="flex justify-end mt-6">
                     <Button onClick={handleSaveChanges} disabled={isSavingTools || selectedUser?.role === 'Admin'}>
