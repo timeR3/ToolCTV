@@ -1,15 +1,13 @@
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, hasPermission } from "@/lib/auth";
 import { getLogs } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { AuditLogClient } from "@/components/audit-log-client";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function AuditLogPage() {
   const user = await getCurrentUser();
   
-  if (user.role !== "Superadmin") {
+  if (!(await hasPermission(user, 'access_audit_log'))) {
     redirect("/");
   }
 

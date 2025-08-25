@@ -18,11 +18,12 @@ export async function getCurrentUser(): Promise<User> {
       return allUsers[0];
     }
     const user = rows[0] as User;
-    // The mysql2 driver can parse JSON columns automatically.
-    // If assignedTools is a TEXT column storing a JSON string, you might need to parse it:
-    // if (typeof user.assignedTools === 'string') {
-    //   user.assignedTools = JSON.parse(user.assignedTools || '[]');
-    // }
+    user.assignedTools = []; // Initialize as empty array
+    
+    const assignedToolsResult = await query('SELECT tool_id FROM user_tools WHERE user_id = ?', [user.id]) as any[];
+    if (assignedToolsResult.length > 0) {
+        user.assignedTools = assignedToolsResult.map((row: any) => row.tool_id);
+    }
     return user;
   } catch (error) {
     console.error("Failed to fetch current user:", error);
@@ -35,5 +36,30 @@ export async function getCurrentUser(): Promise<User> {
         role: 'User',
         assignedTools: [],
     };
+  }
+}
+
+export async function hasPermission(user: User, permissionName: string): Promise<boolean> {
+  if (!user || !user.role) {
+    return false;
+  }
+  
+  // Superadmin always has all permissions
+  if (user.role === 'Superadmin') {
+    return true;
+  }
+  
+  try {
+    const permissionQuery = `
+      SELECT COUNT(*) as count
+      FROM role_permissions rp
+      JOIN permissions p ON rp.permission_id = p.id
+      WHERE rp.role = ? AND p.name = ?
+    `;
+    const rows = await query(permissionQuery, [user.role, permissionName]) as any[];
+    return rows[0].count > 0;
+  } catch (error) {
+    console.error(`Failed to check permission '${permissionName}' for user '${user.id}':`, error);
+    return false;
   }
 }

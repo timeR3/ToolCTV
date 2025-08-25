@@ -9,6 +9,7 @@ import {
   User as UserIcon,
   Shapes,
   Users,
+  ShieldCheck,
 } from "lucide-react";
 
 import {
@@ -27,13 +28,17 @@ interface MainNavProps {
   user: User;
   userTools: Tool[];
   allCategories: Category[];
+  permissions: {
+    canManageUsers: boolean;
+    canManageTools: boolean;
+    canManageCategories: boolean;
+    canManagePermissions: boolean;
+    canViewAuditLog: boolean;
+  };
 }
 
-export function MainNav({ user, userTools, allCategories }: MainNavProps) {
+export function MainNav({ user, userTools, allCategories, permissions }: MainNavProps) {
   const pathname = usePathname();
-  
-  const isSuperadmin = user.role === "Superadmin";
-  const isAdmin = user.role === "Admin";
 
   const toolsByCategory = userTools.reduce((acc, tool) => {
     const categoryName = tool.category || "General";
@@ -97,7 +102,7 @@ export function MainNav({ user, userTools, allCategories }: MainNavProps) {
         )
       })}
 
-      {(isAdmin || isSuperadmin) && <SidebarSeparator />}
+      {(permissions.canManageUsers || permissions.canManageTools) && <SidebarSeparator />}
 
       <SidebarGroup>
         <SidebarGroupLabel>Settings</SidebarGroupLabel>
@@ -110,7 +115,7 @@ export function MainNav({ user, userTools, allCategories }: MainNavProps) {
           </SidebarMenuItem>
         </Link>
         
-        {(isAdmin || isSuperadmin) && (
+        {permissions.canManageUsers && (
             <Link href="/manage-users">
               <SidebarMenuItem>
                 <SidebarMenuButton isActive={pathname === "/manage-users"}>
@@ -120,35 +125,51 @@ export function MainNav({ user, userTools, allCategories }: MainNavProps) {
               </SidebarMenuItem>
             </Link>
         )}
-
-        {isSuperadmin && (
+        
+        {user.role === 'Superadmin' && (
           <>
-            <Link href="/manage-tools">
-              <SidebarMenuItem>
-                <SidebarMenuButton isActive={pathname === "/manage-tools"}>
-                  <Wrench />
-                  <span>Manage Tools</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </Link>
-            <Link href="/manage-categories">
-              <SidebarMenuItem>
-                <SidebarMenuButton isActive={pathname === "/manage-categories"}>
-                  <Shapes />
-                  <span>Manage Categories</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </Link>
-             <Link href="/audit-log">
+            {permissions.canManageTools && (
+               <Link href="/manage-tools">
                 <SidebarMenuItem>
-                <SidebarMenuButton
-                    isActive={pathname.startsWith("/audit-log")}
-                >
-                    <FileClock />
-                    <span>Audit Log</span>
-                </SidebarMenuButton>
+                  <SidebarMenuButton isActive={pathname === "/manage-tools"}>
+                    <Wrench />
+                    <span>Manage Tools</span>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
-            </Link>
+              </Link>
+            )}
+            {permissions.canManageCategories && (
+              <Link href="/manage-categories">
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={pathname === "/manage-categories"}>
+                    <Shapes />
+                    <span>Manage Categories</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </Link>
+            )}
+             {permissions.canManagePermissions && (
+              <Link href="/manage-permissions">
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive={pathname === "/manage-permissions"}>
+                    <ShieldCheck />
+                    <span>Manage Permissions</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </Link>
+            )}
+            {permissions.canViewAuditLog && (
+               <Link href="/audit-log">
+                  <SidebarMenuItem>
+                  <SidebarMenuButton
+                      isActive={pathname.startsWith("/audit-log")}
+                  >
+                      <FileClock />
+                      <span>Audit Log</span>
+                  </SidebarMenuButton>
+                  </SidebarMenuItem>
+              </Link>
+            )}
           </>
         )}
 

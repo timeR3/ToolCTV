@@ -1,17 +1,13 @@
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, hasPermission } from "@/lib/auth";
 import { getTools, getUsers } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { ManageUsersClient } from "@/components/manage-users-client";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function ManageUsersPage() {
   const user = await getCurrentUser();
   
-  const hasAccess = user.role === "Admin" || user.role === "Superadmin";
-
-  if (!hasAccess) {
+  if (!(await hasPermission(user, 'access_manage_users'))) {
     redirect("/");
   }
   

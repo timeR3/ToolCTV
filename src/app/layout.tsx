@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, hasPermission } from "@/lib/auth";
 import { getCategories, getTools } from "@/lib/data";
 import {
   SidebarProvider,
@@ -26,11 +26,6 @@ export const metadata: Metadata = {
   description: 'Your integrated tool suite.',
 };
 
-interface NavProps {
-  userTools: Tool[];
-  allCategories: Category[];
-}
-
 const Nav = async () => {
   const user = await getCurrentUser();
   const allTools = await getTools();
@@ -41,8 +36,31 @@ const Nav = async () => {
     user.role === 'Superadmin' || 
     (user.assignedTools && user.assignedTools.includes(tool.id))
   ).filter(tool => tool.enabled);
+  
+  // Check all permissions at once
+  const [
+    canManageUsers,
+    canManageTools,
+    canManageCategories,
+    canManagePermissions,
+    canViewAuditLog
+  ] = await Promise.all([
+    hasPermission(user, 'access_manage_users'),
+    hasPermission(user, 'access_manage_tools'),
+    hasPermission(user, 'access_manage_categories'),
+    hasPermission(user, 'access_manage_permissions'),
+    hasPermission(user, 'access_audit_log')
+  ]);
+  
+  const permissions = {
+    canManageUsers,
+    canManageTools,
+    canManageCategories,
+    canManagePermissions,
+    canViewAuditLog
+  };
 
-  return <MainNav user={user} userTools={userTools} allCategories={allCategories} />;
+  return <MainNav user={user} userTools={userTools} allCategories={allCategories} permissions={permissions} />;
 };
 
 const NavSkeleton = () => {
