@@ -47,11 +47,7 @@ export async function hasPermission(user: User, permissionName: string): Promise
     return false;
   }
   
-  // Superadmin always has all permissions
-  if (user.role === 'Superadmin') {
-    return true;
-  }
-  
+  // All permissions are now checked against the database.
   try {
     const permissionQuery = `
       SELECT COUNT(*) as count
