@@ -20,7 +20,6 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainNav } from '@/components/main-nav';
 import type { Category, Tool, User } from '@/types';
-import { redirect } from 'next/navigation';
 
 
 export const metadata: Metadata = {
@@ -32,7 +31,9 @@ const Nav = async () => {
   const user = await getCurrentUser();
   // This should not happen if middleware is correct, but as a safeguard:
   if (!user) {
-    redirect('/login');
+    // This will be caught by the error boundary in a real app
+    // For now, it prevents render errors if the session is lost.
+    return null;
   }
   const allTools = await getTools();
   const allCategories = await getCategories();
@@ -90,10 +91,13 @@ export default async function RootLayout({
   if (!user) {
     // This case is for when the layout is accessed on a non-protected page
     // like /login, we don't want to render the authed layout.
-    // The middleware handles the actual protection.
+    // The per-page protection handles the actual protection.
     return (
          <html lang="en" className="dark">
-            <body className="font-body antialiased">{children}</body>
+            <body className="font-body antialiased">
+              {children}
+              <Toaster />
+            </body>
          </html>
     )
   }
