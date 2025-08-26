@@ -56,7 +56,7 @@ export default async function ToolPage({ params }: { params: { slug: string } })
           <AlertTitle>Tool Disabled</AlertTitle>
           <AlertDescription>
             This tool is currently disabled by an administrator. Please check back later or contact support.
-          </Description>
+          </AlertDescription>
         </Alert>
       </div>
     )
