@@ -25,8 +25,8 @@ interface UserNavProps {
 function LogoutAction() {
     return (
         <form action={logout} className="w-full">
-            <button type="submit" className="w-full" disabled>
-                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled>
+            <button type="submit" className="w-full">
+                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <LogOut />
                     Log out
                 </DropdownMenuItem>
