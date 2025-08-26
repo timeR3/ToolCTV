@@ -1,8 +1,7 @@
-
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from './lib/auth-session';
+import { getSession } from './src/lib/auth-session';
 
 const protectedRoutes = [
     '/',
