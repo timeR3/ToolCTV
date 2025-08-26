@@ -2,16 +2,16 @@ import { getCurrentUser, hasPermission } from "@/lib/auth-db";
 import { getTools, getUsers } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { ManageUsersClient } from "@/components/manage-users-client";
-import { redirect } from "next/navigation";
 
 export default async function ManageUsersPage() {
   const user = await getCurrentUser();
-  if (!user) {
-    redirect('/login');
-  }
-  
-  if (!(await hasPermission(user, 'access_manage_users'))) {
-    redirect("/");
+  if (!user || !(await hasPermission(user, 'access_manage_users'))) {
+    return (
+        <div className="p-4">
+            <h1 className="text-2xl font-bold">Access Denied</h1>
+            <p>You do not have permission to view this page.</p>
+        </div>
+    )
   }
   
   const users = await getUsers();

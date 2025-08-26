@@ -1,13 +1,17 @@
 import { getCurrentUser } from "@/lib/auth-db";
 import { PageHeader } from "@/components/page-header";
 import { ProfileForm } from "@/components/profile-form";
-import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect('/login');
+     return (
+        <div className="p-4">
+            <h1 className="text-2xl font-bold">No User Found</h1>
+            <p>Could not load user profile.</p>
+        </div>
+    )
   }
 
   return (

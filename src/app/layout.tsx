@@ -89,9 +89,6 @@ export default async function RootLayout({
   const user = await getCurrentUser();
 
   if (!user) {
-    // This case is for when the layout is accessed on a non-protected page
-    // like /login, we don't want to render the authed layout.
-    // The per-page protection handles the actual protection.
     return (
          <html lang="en" className="dark">
             <body className="font-body antialiased">

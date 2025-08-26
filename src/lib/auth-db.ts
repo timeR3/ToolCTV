@@ -2,21 +2,23 @@
 
 import type { User } from '@/types';
 import { query } from './db';
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
-import { getSession, encrypt } from './auth-session';
 
+// This function now automatically "logs in" the first user with the 'User' role.
 export async function getCurrentUser(): Promise<User | null> {
-  const session = await getSession();
-  if (!session?.userId) {
-    return null;
-  }
-
   try {
-    const rows = await query("SELECT * FROM users WHERE id = ?", [session.userId]) as any[];
+    // Find the first user with the 'User' role.
+    const rows = await query("SELECT * FROM users WHERE role = 'User' LIMIT 1", []) as any[];
     if (rows.length === 0) {
-      return null;
+      console.warn("Auto-login failed: No user with the 'User' role found in the database.");
+      // As a fallback, try to get the very first user, regardless of role.
+      const anyUserRows = await query("SELECT * FROM users LIMIT 1", []) as any[];
+      if (anyUserRows.length === 0) {
+        console.error("Auto-login failed: No users found in the database at all.");
+        return null;
+      }
+      rows.push(anyUserRows[0]);
     }
     const userRow = rows[0];
     
@@ -30,10 +32,11 @@ export async function getCurrentUser(): Promise<User | null> {
     };
 
   } catch (error) {
-    console.error("Failed to fetch current user:", error);
+    console.error("Failed to fetch auto-login user:", error);
     return null;
   }
 }
+
 
 export async function hasPermission(user: User | null, permissionName: string): Promise<boolean> {
   if (!user || !user.role) {
@@ -55,41 +58,15 @@ export async function hasPermission(user: User | null, permissionName: string): 
   }
 }
 
+// Note: The login and logout functions are no longer used by the application flow,
+// but are kept here in case you want to re-enable manual login later.
+
 export async function login(prevState: { error: string } | undefined, formData: FormData) {
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
-    if (!email || !password) {
-        return { error: 'Email and password are required.' };
-    }
-
-    try {
-        const users = await query('SELECT * FROM users WHERE email = ?', [email]) as any[];
-        if (users.length === 0) {
-            return { error: 'Invalid email or password.' };
-        }
-        const user = users[0];
-
-        const passwordsMatch = await bcrypt.compare(password, user.password);
-
-        if (!passwordsMatch) {
-            return { error: 'Invalid email or password.' };
-        }
-
-        const session = { userId: user.id, email: user.email, role: user.role };
-        const sessionCookie = await encrypt(session);
-
-        cookies().set('session', sessionCookie, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 60 * 60 * 24 });
-
-        return redirect('/');
-
-    } catch (error) {
-        console.error('Login error:', error);
-        return { error: 'An internal error occurred. Please try again.' };
-    }
+    return { error: 'Manual login is currently disabled.' };
 }
 
 export async function logout() {
-    cookies().set('session', '', { expires: new Date(0) });
-    redirect('/login');
+    // Logout is disabled as login is automatic.
+    // To re-enable, this should clear the session cookie and redirect.
+    console.log("Logout function called, but it's disabled.");
 }

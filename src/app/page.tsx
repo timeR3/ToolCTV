@@ -10,10 +10,18 @@ import { redirect } from "next/navigation";
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) {
-    redirect('/login');
+    // This can happen if there are no users with the 'User' role in the DB
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+            <h1 className="text-2xl font-bold">No User Found</h1>
+            <p className="text-muted-foreground">Could not automatically log in. Please ensure at least one user with the 'User' role exists in the database.</p>
+        </div>
+      </div>
+    )
   }
 
-  await logUserAccess(user, "User logged in");
+  await logUserAccess(user, "User session auto-started");
   const allTools = await getTools();
   
   const enabledTools = allTools.filter(t => t.enabled);

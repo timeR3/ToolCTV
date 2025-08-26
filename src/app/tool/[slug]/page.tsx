@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/page-header";
 import { getTools, logUserAccess } from "@/lib/data";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, ShieldAlert } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-db";
@@ -8,7 +8,12 @@ import { getCurrentUser } from "@/lib/auth-db";
 export default async function ToolPage({ params }: { params: { slug: string } }) {
   const user = await getCurrentUser();
   if (!user) {
-    redirect('/login');
+     return (
+        <div className="p-4">
+            <h1 className="text-2xl font-bold">Access Denied</h1>
+            <p>You do not have permission to view this page.</p>
+        </div>
+    )
   }
   
   const tools = await getTools();
