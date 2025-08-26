@@ -1,0 +1,20 @@
+{
+  "dashboard": "Dashboard",
+  "welcome_back": "Welcome back, {{name}}!",
+  "welcome_description": "Here are your available tools. Select one from the sidebar to get started.",
+  "your_role": "Your Role",
+  "role_description": "You have {{role}} level permissions.",
+  "available_tools": "Available Tools",
+  "available_tools_description": "Tools currently available for you.",
+  "get_started": "Get Started",
+  "get_started_description": "Ready to dive in? Pick a tool and start working.",
+  "go_to_first_tool": "Go to first tool",
+  "settings": "Settings",
+  "profile": "Profile",
+  "manage_users": "Manage Users",
+  "manage_tools": "Manage Tools",
+  "manage_categories": "Manage Categories",
+  "manage_permissions": "Manage Permissions",
+  "audit_log": "Audit Log",
+  "logout": "Log out"
+}

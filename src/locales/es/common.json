@@ -1,0 +1,20 @@
+{
+  "dashboard": "Panel de Control",
+  "welcome_back": "¡Bienvenido de nuevo, {{name}}!",
+  "welcome_description": "Aquí están tus herramientas disponibles. Selecciona una de la barra lateral para comenzar.",
+  "your_role": "Tu Rol",
+  "role_description": "Tienes permisos de nivel {{role}}.",
+  "available_tools": "Herramientas Disponibles",
+  "available_tools_description": "Herramientas actualmente disponibles para ti.",
+  "get_started": "Comenzar",
+  "get_started_description": "¿Listo para empezar? Elige una herramienta y comienza a trabajar.",
+  "go_to_first_tool": "Ir a la primera herramienta",
+  "settings": "Configuración",
+  "profile": "Perfil",
+  "manage_users": "Gestionar Usuarios",
+  "manage_tools": "Gestionar Herramientas",
+  "manage_categories": "Gestionar Categorías",
+  "manage_permissions": "Gestionar Permisos",
+  "audit_log": "Registro de Auditoría",
+  "logout": "Cerrar sesión"
+}

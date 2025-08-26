@@ -1,3 +1,4 @@
+'use client';
 import {
   Avatar,
   AvatarFallback,
@@ -17,18 +18,20 @@ import type { User as UserType } from "@/types"
 import { LogOut, User as UserIcon } from "lucide-react"
 import Link from "next/link"
 import { logout } from "@/lib/auth-db"
+import { useTranslation } from "react-i18next";
 
 interface UserNavProps {
   user: UserType
 }
 
 function LogoutAction() {
+    const { t } = useTranslation();
     return (
         <form action={logout} className="w-full">
             <button type="submit" className="w-full">
                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <LogOut />
-                    Log out
+                    {t('logout')}
                 </DropdownMenuItem>
             </button>
         </form>
@@ -36,6 +39,8 @@ function LogoutAction() {
 }
 
 export function UserNav({ user }: UserNavProps) {
+  const { t } = useTranslation();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -60,7 +65,7 @@ export function UserNav({ user }: UserNavProps) {
           <Link href="/profile">
             <DropdownMenuItem>
                 <UserIcon />
-                Profile
+                {t('profile')}
             </DropdownMenuItem>
           </Link>
         </DropdownMenuGroup>

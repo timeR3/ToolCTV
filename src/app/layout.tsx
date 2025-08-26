@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from '@/components/theme-provider';
+import { LanguageProvider } from '@/hooks/use-language';
 
 import { getCurrentUser, hasPermission } from "@/lib/auth-db";
 import { getCategories, getTools } from "@/lib/data";
@@ -20,6 +22,8 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainNav } from '@/components/main-nav';
 import type { Category, Tool, User } from '@/types';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageToggle } from '@/components/language-toggle';
 
 
 export const metadata: Metadata = {
@@ -90,17 +94,26 @@ export default async function RootLayout({
 
   if (!user) {
     return (
-         <html lang="en" className="dark">
+        <html lang="en" suppressHydrationWarning>
             <body className="font-body antialiased">
-              {children}
-              <Toaster />
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                  <LanguageProvider>
+                    {children}
+                    <Toaster />
+                  </LanguageProvider>
+                </ThemeProvider>
             </body>
-         </html>
+        </html>
     )
   }
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -108,38 +121,49 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
-          <Sidebar collapsible="icon" className="bg-sidebar">
-            <SidebarRail />
-            <SidebarHeader>
-              <Logo />
-            </SidebarHeader>
-            <SidebarContent>
-              <Suspense fallback={<NavSkeleton />}>
-                <Nav />
-              </Suspense>
-            </SidebarContent>
-            <SidebarFooter>
-              {/* Footer content if any */}
-            </SidebarFooter>
-          </Sidebar>
-          <SidebarInset>
-            <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger className="md:hidden" />
-                <div className="hidden md:flex items-center gap-2">
-                    <SidebarTrigger />
-                    <h2 className='font-semibold'>Dashboard</h2>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+        >
+        <LanguageProvider>
+          <SidebarProvider>
+            <Sidebar collapsible="icon" className="bg-sidebar">
+              <SidebarRail />
+              <SidebarHeader>
+                <Logo />
+              </SidebarHeader>
+              <SidebarContent>
+                <Suspense fallback={<NavSkeleton />}>
+                  <Nav />
+                </Suspense>
+              </SidebarContent>
+              <SidebarFooter>
+                {/* Footer content if any */}
+              </SidebarFooter>
+            </Sidebar>
+            <SidebarInset>
+              <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+                <div className="flex items-center gap-2">
+                  <SidebarTrigger className="md:hidden" />
+                  <div className="hidden md:flex items-center gap-2">
+                      <SidebarTrigger />
+                      <h2 className='font-semibold'>Dashboard</h2>
+                  </div>
                 </div>
-              </div>
-              <div className="ml-auto flex items-center gap-4">
-                <UserNav user={user} />
-              </div>
-            </header>
-            <main className="flex-1 px-4 sm:px-6">{children}</main>
-          </SidebarInset>
-        </SidebarProvider>
-        <Toaster />
+                <div className="ml-auto flex items-center gap-2">
+                  <LanguageToggle />
+                  <ThemeToggle />
+                  <UserNav user={user} />
+                </div>
+              </header>
+              <main className="flex-1 px-4 sm:px-6">{children}</main>
+            </SidebarInset>
+          </SidebarProvider>
+          </LanguageProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
