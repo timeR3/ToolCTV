@@ -61,7 +61,7 @@ export function RegisterForm() {
                     <Input id="email" name="email" type="email" placeholder="m@example.com" required />
                 </div>
                  <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">Password</Label>                    
                     <Input id="password" name="password" type="password" required />
                 </div>
                  {state?.error && (

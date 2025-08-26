@@ -3,6 +3,7 @@
 import type { Tool, LogEntry, User, Category, Role, Permission } from "@/types";
 import { query } from './db';
 import bcrypt from 'bcryptjs';
+import { redirect } from "next/navigation";
 
 const SALT_ROUNDS = 10;
 
@@ -406,7 +407,7 @@ export const updateRolePermission = async (role: Role, permissionId: number, has
     }
 }
 
-export async function registerUser(prevState: { error: string } | undefined, formData: FormData) {
+export async function registerUser(prevState: { error?: string, success?: boolean } | undefined, formData: FormData) {
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
@@ -416,18 +417,20 @@ export async function registerUser(prevState: { error: string } | undefined, for
     }
 
     try {
-        const existingUsers = await query('SELECT * FROM users WHERE email = ?', [email]) as any[];
+        const existingUsers = await query('SELECT id FROM users WHERE email = ?', [email]) as any[];
         if (existingUsers.length > 0) {
             return { error: 'A user with this email already exists.' };
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
         
-        await query(
+        // All new users are registered as 'User'
+        const result = await query(
             'INSERT INTO users (name, email, password, role, avatar) VALUES (?, ?, ?, ?, ?)',
             [name, email, hashedPassword, 'User', '']
-        );
-
+        ) as any;
+        
+        console.log(`User registered with ID: ${result.insertId}`);
         return { success: true };
 
     } catch (error) {
@@ -435,5 +438,3 @@ export async function registerUser(prevState: { error: string } | undefined, for
         return { error: 'An internal error occurred. Please try again.' };
     }
 }
-
-    

@@ -24,7 +24,7 @@ export default function DashboardPage() {
       setUser(fetchedUser);
 
       if (fetchedUser) {
-        await logUserAccess(fetchedUser, "User session auto-started");
+        await logUserAccess(fetchedUser, "User dashboard loaded");
         const allTools = await getTools();
         const enabledTools = allTools.filter(t => t.enabled);
         const fetchedUserTools = enabledTools.filter(tool => 
@@ -53,11 +53,13 @@ export default function DashboardPage() {
   }
 
   if (!user) {
+    // This part should ideally not be reached if middleware is working correctly,
+    // but it's a good fallback.
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-            <h1 className="text-2xl font-bold">No User Found</h1>
-            <p className="text-muted-foreground">Could not automatically log in. Please ensure at least one user with the 'User' role exists in the database.</p>
+            <h1 className="text-2xl font-bold">Authentication Error</h1>
+            <p className="text-muted-foreground">Could not load user data. You may be redirected.</p>
         </div>
       </div>
     )

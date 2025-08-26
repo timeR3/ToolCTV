@@ -4,21 +4,19 @@ import type { User } from '@/types';
 import { query } from './db';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
+import { cookies } from 'next/headers';
+import { encrypt, getSession } from './auth-session';
 
-// This function now automatically "logs in" the first user with the 'User' role.
 export async function getCurrentUser(): Promise<User | null> {
+  const session = await getSession();
+  if (!session?.userId) {
+    return null;
+  }
+  
   try {
-    // Find the first user with the 'User' role.
-    const rows = await query("SELECT * FROM users WHERE role = 'User' LIMIT 1", []) as any[];
+    const rows = await query("SELECT id, name, email, avatar, role FROM users WHERE id = ?", [session.userId]) as any[];
     if (rows.length === 0) {
-      console.warn("Auto-login failed: No user with the 'User' role found in the database.");
-      // As a fallback, try to get the very first user, regardless of role.
-      const anyUserRows = await query("SELECT * FROM users LIMIT 1", []) as any[];
-      if (anyUserRows.length === 0) {
-        console.error("Auto-login failed: No users found in the database at all.");
         return null;
-      }
-      rows.push(anyUserRows[0]);
     }
     const userRow = rows[0];
     
@@ -32,17 +30,19 @@ export async function getCurrentUser(): Promise<User | null> {
     };
 
   } catch (error) {
-    console.error("Failed to fetch auto-login user:", error);
+    console.error("Failed to fetch current user:", error);
     return null;
   }
 }
-
 
 export async function hasPermission(user: User | null, permissionName: string): Promise<boolean> {
   if (!user || !user.role) {
     return false;
   }
   
+  // Per the new requirement, we only check for 'User' role permissions for the UI
+  const roleToCheck = 'User';
+
   try {
     const permissionQuery = `
       SELECT COUNT(*) as count
@@ -50,7 +50,12 @@ export async function hasPermission(user: User | null, permissionName: string): 
       JOIN permissions p ON rp.permission_id = p.id
       WHERE rp.role = ? AND p.name = ?
     `;
-    const rows = await query(permissionQuery, [user.role, permissionName]) as any[];
+    const rows = await query(permissionQuery, [roleToCheck, permissionName]) as any[];
+    
+    // Superadmin and Admin still have all permissions implicitly for backend actions.
+    // The UI is just restricted.
+    if (user.role === 'Superadmin' || user.role === 'Admin') return true;
+    
     return rows[0].count > 0;
   } catch (error) {
     console.error(`Failed to check permission '${permissionName}' for user '${user.id}':`, error);
@@ -58,15 +63,43 @@ export async function hasPermission(user: User | null, permissionName: string): 
   }
 }
 
-// Note: The login and logout functions are no longer used by the application flow,
-// but are kept here in case you want to re-enable manual login later.
 
 export async function login(prevState: { error: string } | undefined, formData: FormData) {
-    return { error: 'Manual login is currently disabled.' };
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    if (!email || !password) {
+        return { error: 'Email and password are required.' };
+    }
+
+    try {
+        const userRows = await query('SELECT * FROM users WHERE email = ?', [email]) as any[];
+        if (userRows.length === 0) {
+            return { error: 'Invalid email or password.' };
+        }
+        const user = userRows[0];
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return { error: 'Invalid email or password.' };
+        }
+
+        // Create session
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const session = await encrypt({ userId: user.id, expires });
+
+        // Save session in a cookie
+        cookies().set('session', session, { expires, httpOnly: true });
+
+    } catch (error) {
+        console.error('Login error:', error);
+        return { error: 'An internal error occurred. Please try again.' };
+    }
+
+    redirect('/');
 }
 
 export async function logout() {
-    // Logout is disabled as login is automatic.
-    // To re-enable, this should clear the session cookie and redirect.
-    console.log("Logout function called, but it's disabled.");
+    cookies().set('session', '', { expires: new Date(0) });
+    redirect('/login');
 }
