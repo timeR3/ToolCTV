@@ -17,6 +17,8 @@ export async function getCurrentUser(): Promise<User | null> {
   try {
     const rows = await query("SELECT id, name, email, avatar, role FROM users WHERE id = ?", [session.userId]) as any[];
     if (rows.length === 0) {
+        // This case might happen if the user was deleted but the session still exists.
+        // The middleware should ideally handle redirecting to login.
         return null;
     }
     const userRow = rows[0];
@@ -87,7 +89,7 @@ export async function login(prevState: { error: string } | undefined, formData: 
         const session = await encrypt({ userId: user.id, expires });
 
         // Save session in a cookie
-        cookies().set('session', session, { expires, httpOnly: true });
+        cookies().set('session', session, { expires, httpOnly: true, path: '/' });
 
     } catch (error) {
         console.error('Login error:', error);
@@ -98,6 +100,6 @@ export async function login(prevState: { error: string } | undefined, formData: 
 }
 
 export async function logout() {
-    cookies().set('session', '', { expires: new Date(0) });
+    cookies().set('session', '', { expires: new Date(0), path: '/' });
     redirect('/login');
 }

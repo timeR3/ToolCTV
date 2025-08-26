@@ -1,7 +1,8 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from './src/lib/auth-session';
+import { decrypt } from './src/lib/auth-session';
+import { cookies } from 'next/headers';
 
 const protectedRoutes = [
     '/',
@@ -16,18 +17,25 @@ const protectedRoutes = [
 const publicRoutes = ['/login', '/register'];
 
 export async function middleware(request: NextRequest) {
-  const session = await getSession();
+  const sessionCookie = cookies().get('session')?.value;
+  const session = sessionCookie ? await decrypt(sessionCookie) : null;
   const { pathname } = request.nextUrl;
 
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-
-  if (!session && isProtectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route) && route !== '/');
+  const isHomePage = pathname === '/';
+  
+  if (isProtectedRoute || isHomePage) {
+    if (!session || !session.userId) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      const response = NextResponse.redirect(url);
+      // Clean up invalid session cookie
+      response.cookies.delete('session');
+      return response;
+    }
   }
 
-  if (session && publicRoutes.includes(pathname)) {
+  if (session && session.userId && publicRoutes.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
