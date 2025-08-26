@@ -1,10 +1,14 @@
 'use server';
 
+import 'dotenv/config';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
-import type { User } from '@/types';
 
-const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'default-secret-key-that-is-long-enough');
+const secretKey = process.env.AUTH_SECRET;
+if (!secretKey) {
+  throw new Error('AUTH_SECRET environment variable is not set. Please add it to your .env file.');
+}
+const secret = new TextEncoder().encode(secretKey);
 const alg = 'HS256';
 
 export async function encrypt(payload: any) {
@@ -22,6 +26,7 @@ export async function decrypt(input: string): Promise<any> {
         });
         return payload;
     } catch (e) {
+        console.error('Decryption failed:', e);
         return null;
     }
 }
