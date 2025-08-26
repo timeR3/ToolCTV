@@ -1,7 +1,7 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from './src/lib/auth-session';
+import { decrypt } from './lib/auth-session';
 import { cookies } from 'next/headers';
 
 // All routes are protected by default, except for the public routes.

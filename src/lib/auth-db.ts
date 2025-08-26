@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { User } from '@/types';
+import type { User } from "@/types";
 import { query } from './db';
 import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
