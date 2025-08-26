@@ -1,3 +1,4 @@
+
 'use server';
 
 import type { User } from '@/types';
@@ -40,8 +41,9 @@ export async function hasPermission(user: User | null, permissionName: string): 
     return false;
   }
   
-  // Per the new requirement, we only check for 'User' role permissions for the UI
-  const roleToCheck = 'User';
+  if (user.role === 'Superadmin' || user.role === 'Admin') {
+    return true;
+  }
 
   try {
     const permissionQuery = `
@@ -50,11 +52,7 @@ export async function hasPermission(user: User | null, permissionName: string): 
       JOIN permissions p ON rp.permission_id = p.id
       WHERE rp.role = ? AND p.name = ?
     `;
-    const rows = await query(permissionQuery, [roleToCheck, permissionName]) as any[];
-    
-    // Superadmin and Admin still have all permissions implicitly for backend actions.
-    // The UI is just restricted.
-    if (user.role === 'Superadmin' || user.role === 'Admin') return true;
+    const rows = await query(permissionQuery, [user.role, permissionName]) as any[];
     
     return rows[0].count > 0;
   } catch (error) {
