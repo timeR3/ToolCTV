@@ -30,6 +30,7 @@ import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+import { hasPermission } from "@/lib/auth-db";
 
 interface ManageUsersClientProps {
   initialUsers: User[];
@@ -175,6 +176,11 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
   };
 
   const enabledTools = allTools.filter(tool => tool.enabled);
+  
+  const canEditUsers = hasPermission(currentUser, 'edit_any_user');
+  const canChangeRoles = hasPermission(currentUser, 'change_user_roles');
+  const canAssignTools = hasPermission(currentUser, 'assign_tools');
+
 
   return (
     <>
@@ -210,13 +216,12 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                         <Badge variant={roleColors[user.role]}>{user.role}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                        {currentUser.role === 'Superadmin' && (
                           <>
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={(e) => { e.stopPropagation(); handleEditUserClick(user); }}
-                                disabled={user.id === currentUser.id && currentUser.role !== 'Superadmin'}
+                                disabled={!canEditUsers && currentUser.id !== user.id}
                                 title="Edit User Details"
                             >
                                 <Pencil className="h-4 w-4" />
@@ -225,7 +230,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                                 variant="ghost"
                                 size="icon"
                                 onClick={(e) => { e.stopPropagation(); handleEditRoleClick(user); }}
-                                disabled={user.id === currentUser.id}
+                                disabled={!canChangeRoles || user.id === currentUser.id}
                                 title="Change User Role"
                             >
                                 <Users className="h-4 w-4" />
@@ -262,7 +267,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                                             id={`tool-${tool.id}`}
                                             checked={assignedTools.includes(tool.id) || selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}
                                             onCheckedChange={() => handleToolToggle(tool.id)}
-                                            disabled={selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}
+                                            disabled={!canAssignTools || selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}
                                         />
                                         <label
                                             htmlFor={`tool-${tool.id}`}
@@ -278,7 +283,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                     </Table>
                 </ScrollArea>
                 <div className="flex justify-end mt-6">
-                    <Button onClick={handleSaveChanges} disabled={isSaving || selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}>
+                    <Button onClick={handleSaveChanges} disabled={isSaving || !canAssignTools || selectedUser?.role === 'Admin' || selectedUser?.role === 'Superadmin'}>
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Save Tool Assignments
                     </Button>

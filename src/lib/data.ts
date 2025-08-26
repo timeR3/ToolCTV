@@ -4,6 +4,7 @@ import type { Tool, LogEntry, User, Category, Role, Permission } from "@/types";
 import { query } from './db';
 import bcrypt from 'bcryptjs';
 import { redirect } from "next/navigation";
+import { hasPermission } from "./auth-db";
 
 const SALT_ROUNDS = 10;
 
@@ -35,6 +36,9 @@ export const getTools = async (): Promise<Tool[]> => {
 };
 
 export const addTool = async (tool: Omit<Tool, 'id' | 'category' | 'createdByUser'>, user: User): Promise<Tool> => {
+    if (!(await hasPermission(user, 'add_tools'))) {
+        throw new Error('You do not have permission to add tools.');
+    }
   await sleep(200);
   const categoryResult = await query('SELECT id FROM categories WHERE name = ?', [tool.category]) as any[];
     if (categoryResult.length === 0) {
@@ -71,8 +75,10 @@ export const updateTool = async (updatedTool: Tool, user: User) => {
     const oldTool = oldToolResult[0];
 
     // Ownership check
-    if (oldTool.created_by_user_id !== user.id && user.role !== 'Superadmin') {
-      throw new Error("Permission Denied. You can only edit tools you created.");
+    if (oldTool.created_by_user_id !== user.id && !(await hasPermission(user, 'edit_any_tool'))) {
+        if (!(await hasPermission(user, 'edit_own_tool'))) {
+            throw new Error("Permission Denied. You cannot edit this tool.");
+        }
     }
 
     const categoryResult = await query('SELECT id FROM categories WHERE name = ?', [updatedTool.category]) as any[];
@@ -109,9 +115,10 @@ export const deleteTool = async (toolId: number, user: User) => {
   if(toolToDeleteResult.length > 0) {
     const toolToDelete = toolToDeleteResult[0];
     
-    // Ownership check
-    if (toolToDelete.created_by_user_id !== user.id && user.role !== 'Superadmin') {
-      throw new Error("Permission Denied. You can only delete tools you created.");
+    if (toolToDelete.created_by_user_id !== user.id && !(await hasPermission(user, 'delete_any_tool'))) {
+        if (!(await hasPermission(user, 'delete_own_tool'))) {
+             throw new Error("Permission Denied. You cannot delete this tool.");
+        }
     }
 
     await query('DELETE FROM user_tools WHERE tool_id = ?', [toolId]);
@@ -172,6 +179,9 @@ export const getCategories = async (): Promise<Category[]> => {
 }
 
 export const addCategory = async (category: Omit<Category, 'id'>, user: User): Promise<Category> => {
+    if (!(await hasPermission(user, 'add_categories'))) {
+        throw new Error('You do not have permission to add categories.');
+    }
     await sleep(100);
     const result = await query(
         'INSERT INTO categories (name, description, enabled, icon, iconUrl) VALUES (?, ?, ?, ?, ?)',
@@ -184,8 +194,8 @@ export const addCategory = async (category: Omit<Category, 'id'>, user: User): P
 }
 
 export const updateUserRole = async (userId: number, role: Role, admin: User): Promise<User | null> => {
-    if (admin.role !== 'Superadmin') {
-        throw new Error('Only Superadmins can change user roles.');
+    if (!(await hasPermission(admin, 'change_user_roles'))) {
+        throw new Error('You do not have permission to change user roles.');
     }
     try {
         await query('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
@@ -199,7 +209,7 @@ export const updateUserRole = async (userId: number, role: Role, admin: User): P
 
 export const updateUser = async (userId: number, data: Partial<User>, admin: User): Promise<User | null> => {
     const isSelfUpdate = userId === admin.id;
-    if (!isSelfUpdate && admin.role !== 'Superadmin') {
+    if (!isSelfUpdate && !(await hasPermission(admin, 'edit_any_user'))) {
         throw new Error("You are not authorized to update this user.");
     }
 
@@ -209,7 +219,7 @@ export const updateUser = async (userId: number, data: Partial<User>, admin: Use
 
     const fieldsToUpdate: Partial<User> = {};
     if (data.name) fieldsToUpdate.name = data.name;
-    if (data.email && admin.role === 'Superadmin') fieldsToUpdate.email = data.email;
+    if (data.email && (await hasPermission(admin, 'edit_any_user'))) fieldsToUpdate.email = data.email;
     if (data.password) {
         const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
         fieldsToUpdate.password = hashedPassword;
@@ -231,6 +241,9 @@ export const updateUser = async (userId: number, data: Partial<User>, admin: Use
 
 
 export const updateCategory = async (updatedCategory: Category, user: User) => {
+    if (!(await hasPermission(user, 'edit_categories'))) {
+        throw new Error('You do not have permission to edit categories.');
+    }
     await sleep(100);
     const oldCategoryResult = await query('SELECT * FROM categories WHERE id = ?', [updatedCategory.id]) as any[];
     if(oldCategoryResult.length > 0) {
@@ -247,6 +260,9 @@ export const updateCategory = async (updatedCategory: Category, user: User) => {
 }
 
 export const deleteCategory = async (categoryId: number, user: User) => {
+    if (!(await hasPermission(user, 'delete_categories'))) {
+        throw new Error('You do not have permission to delete categories.');
+    }
     await sleep(100);
     const categoryToDeleteResult = await query('SELECT name FROM categories WHERE id = ?', [categoryId]) as any[];
     if (categoryToDeleteResult.length > 0) {
@@ -321,8 +337,8 @@ export const getUsers = async (): Promise<User[]> => {
 }
 
 export const assignToolsToUser = async (userId: number, toolIds: number[], admin: User): Promise<User | null> => {
-    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') {
-        throw new Error('Only Admins and Superadmins can assign tools.');
+    if (!(await hasPermission(admin, 'assign_tools'))) {
+        throw new Error('You do not have permission to assign tools.');
     }
     
     try {

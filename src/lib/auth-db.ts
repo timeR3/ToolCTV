@@ -43,7 +43,7 @@ export async function hasPermission(user: User | null, permissionName: string): 
     return false;
   }
   
-  if (user.role === 'Superadmin' || user.role === 'Admin') {
+  if (user.role === 'Superadmin') {
     return true;
   }
 

@@ -3,7 +3,7 @@ import { getTools, logUserAccess } from "@/lib/data";
 import { notFound } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, ShieldAlert } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth-db";
+import { getCurrentUser, hasPermission } from "@/lib/auth-db";
 
 export default async function ToolPage({ params }: { params: { slug: string } }) {
   const user = await getCurrentUser();
@@ -28,8 +28,10 @@ export default async function ToolPage({ params }: { params: { slug: string } })
   const hasAccess = user.role === 'Superadmin' || 
                     user.role === 'Admin' || 
                     (user.assignedTools && user.assignedTools.includes(tool.id));
+  
+  const canAccessTool = await hasPermission(user, 'access_tools');
 
-  if (!hasAccess) {
+  if (!hasAccess || !canAccessTool) {
     return (
        <div className="container mx-auto py-10">
         <Alert variant="destructive">
@@ -54,7 +56,7 @@ export default async function ToolPage({ params }: { params: { slug: string } })
           <AlertTitle>Tool Disabled</AlertTitle>
           <AlertDescription>
             This tool is currently disabled by an administrator. Please check back later or contact support.
-          </AlertDescription>
+          </Description>
         </Alert>
       </div>
     )

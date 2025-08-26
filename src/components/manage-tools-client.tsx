@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DynamicIcon } from "./icons";
+import { hasPermission } from "@/lib/auth-db";
 
 interface ManageToolsClientProps {
     initialTools: Tool[];
@@ -55,6 +56,23 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
   const [currentTool, setCurrentTool] = useState<Partial<Tool>>({});
   const [toolToDelete, setToolToDelete] = useState<Tool | null>(null);
   const { toast } = useToast();
+  
+  const [canAdd, setCanAdd] = useState(false);
+  const [canEditOwn, setCanEditOwn] = useState(false);
+  const [canEditAny, setCanEditAny] = useState(false);
+  const [canDeleteOwn, setCanDeleteOwn] = useState(false);
+  const [canDeleteAny, setCanDeleteAny] = useState(false);
+  
+  useEffect(() => {
+    const checkPerms = async () => {
+        setCanAdd(await hasPermission(user, 'add_tools'));
+        setCanEditOwn(await hasPermission(user, 'edit_own_tool'));
+        setCanEditAny(await hasPermission(user, 'edit_any_tool'));
+        setCanDeleteOwn(await hasPermission(user, 'delete_own_tool'));
+        setCanDeleteAny(await hasPermission(user, 'delete_any_tool'));
+    }
+    checkPerms();
+  }, [user]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -153,7 +171,7 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
   return (
     <>
       <div className="flex justify-end">
-        <Button onClick={handleNewTool}>
+        <Button onClick={handleNewTool} disabled={!canAdd}>
             <PlusCircle className="mr-2 h-4 w-4" /> New Tool
         </Button>
       </div>
@@ -171,7 +189,11 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tools.map((tool) => (
+            {tools.map((tool) => {
+              const canEditThisTool = canEditAny || (canEditOwn && user.id === tool.created_by_user_id);
+              const canDeleteThisTool = canDeleteAny || (canDeleteOwn && user.id === tool.created_by_user_id);
+
+              return (
               <TableRow key={tool.id}>
                 <TableCell>
                   <Avatar className="h-8 w-8 rounded-md">
@@ -193,8 +215,8 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
                     variant="ghost" 
                     size="icon" 
                     onClick={() => handleEditTool(tool)}
-                    disabled={user.role !== 'Superadmin' && user.id !== tool.created_by_user_id}
-                    title={user.role !== 'Superadmin' && user.id !== tool.created_by_user_id ? "You can only edit tools you created" : "Edit tool"}
+                    disabled={!canEditThisTool}
+                    title={!canEditThisTool ? "You don't have permission to edit this tool" : "Edit tool"}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -202,14 +224,14 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
                     variant="ghost" 
                     size="icon" 
                     onClick={() => handleDeleteClick(tool)}
-                    disabled={user.role !== 'Superadmin' && user.id !== tool.created_by_user_id}
-                    title={user.role !== 'Superadmin' && user.id !== tool.created_by_user_id ? "You can only delete tools you created" : "Delete tool"}
+                    disabled={!canDeleteThisTool}
+                    title={!canDeleteThisTool ? "You don't have permission to delete this tool" : "Delete tool"}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
           </TableBody>
         </Table>
       </div>
