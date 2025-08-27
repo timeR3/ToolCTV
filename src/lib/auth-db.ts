@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { encrypt, getSession } from './auth-session';
+import { logDetailedError } from './error-logger'; // Import the new logger
 
 export async function getCurrentUser(): Promise<User | null> {
   const session = await getSession();
@@ -32,8 +33,8 @@ export async function getCurrentUser(): Promise<User | null> {
       assignedTools,
     };
 
-  } catch (error) {
-    console.error("Failed to fetch current user:", error);
+  } catch (error: unknown) {
+    logDetailedError("Fetching Current User", error, { userId: session.userId });
     return null;
   }
 }
@@ -57,12 +58,11 @@ export async function hasPermission(user: User | null, permissionName: string): 
     const rows = await query(permissionQuery, [user.role, permissionName]) as any[];
     
     return rows[0].count > 0;
-  } catch (error) {
-    console.error(`Failed to check permission '${permissionName}' for user '${user.id}':`, error);
+  } catch (error: unknown) {
+    logDetailedError("Checking User Permission", error, { userId: user?.id, permissionName });
     return false;
   }
 }
-
 
 export async function login(prevState: { error: string } | undefined, formData: FormData) {
     const email = formData.get('email') as string;
@@ -89,14 +89,24 @@ export async function login(prevState: { error: string } | undefined, formData: 
         const session = await encrypt({ userId: user.id, expires });
 
         // Save session in a cookie
-        cookies().set('session', session, { expires, httpOnly: true, path: '/' });
+        cookies().set('session', session, {
+          expires, 
+          httpOnly: true,
+          path: '/',
+          secure: process.env.NODE_ENV === 'production', // Usar `secure` solo en producción
+          sameSite: 'lax', // Previene ataques CSRF
+        });
 
-    } catch (error) {
-        console.error('Login error:', error);
+        console.log(`Login successful for user: ${user.email}. Session cookie set.`);
+        console.log(`Session expires: ${expires.toISOString()}`);
+
+        // Redirect to the home page after a successful login
+        return redirect('/');
+
+    } catch (error: unknown) {
+        logDetailedError("User Login", error, { email });
         return { error: 'An internal error occurred. Please try again.' };
     }
-
-    redirect('/');
 }
 
 export async function logout() {

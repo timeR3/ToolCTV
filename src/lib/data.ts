@@ -5,11 +5,14 @@ import { query } from './db';
 import bcrypt from 'bcryptjs';
 import { redirect } from "next/navigation";
 import { hasPermission } from "./auth-db";
+import { logDetailedError } from './error-logger'; // Import the new logger
 
 const SALT_ROUNDS = 10;
 
 // Simulate fetching data with a delay
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Removed the local logDetailedError definition as it's now imported.
 
 export const getTools = async (): Promise<Tool[]> => {
   try {
@@ -29,8 +32,8 @@ export const getTools = async (): Promise<Tool[]> => {
       created_by_user_id: Number(row.created_by_user_id),
       createdByUser: row.createdByUserName
     }));
-  } catch (error) {
-    console.error("Failed to fetch tools:", error);
+  } catch (error: unknown) {
+    logDetailedError("Failed to fetch tools", error);
     return [];
   }
 };
@@ -51,6 +54,7 @@ export const addTool = async (tool: Omit<Tool, 'id' | 'category' | 'createdByUse
     [tool.name, tool.description, tool.url, tool.icon, tool.iconUrl, tool.enabled, category_id, user.id]
   ) as any;
   const newToolId = result.insertId;
+  // logAction uses the imported logDetailedError indirectly now
   logAction(user, `Created tool: ${tool.name}`, `ID: ${newToolId}`);
   const newToolResult = await query(`
     SELECT t.*, c.name as categoryName, u.name as createdByUserName 
@@ -100,10 +104,10 @@ export const updateTool = async (updatedTool: Tool, user: User) => {
     const newTool = newToolResult[0];
     return {
         ...newTool, 
-        category: newTool.categoryName, 
-        id: Number(newTool.id), 
-        created_by_user_id: Number(newTool.created_by_user_id),
-        createdByUser: newTool.createdByUserName
+    category: newTool.categoryName, 
+    id: Number(newTool.id), 
+    created_by_user_id: Number(newTool.created_by_user_id),
+    createdByUser: newTool.createdByUserName
     };
   }
   return null;
@@ -136,8 +140,8 @@ export const getLogs = async (): Promise<LogEntry[]> => {
             ORDER BY l.timestamp DESC
         `, []) as any[];
         return rows.map(r => ({ ...r, id: Number(r.id) }));
-    } catch (error) {
-        console.error("Failed to fetch logs:", error);
+    } catch (error: unknown) {
+        logDetailedError("Failed to fetch logs", error);
         return [];
     }
 };
@@ -148,8 +152,8 @@ const logAction = async (user: User, action: string, details: string) => {
             'INSERT INTO audit_log (user_id, action, details) VALUES (?, ?, ?)',
             [user.id, action, details]
         );
-    } catch (error) {
-        console.error("Failed to log action:", error);
+    } catch (error: unknown) {
+        logDetailedError("Failed to log action", error, { userId: user.id });
     }
 };
 
@@ -172,8 +176,8 @@ export const getCategories = async (): Promise<Category[]> => {
     try {
       const rows = await query('SELECT * FROM categories', []) as any[];
       return rows.map(r => ({ ...r, id: Number(r.id), enabled: Boolean(r.enabled) }));
-    } catch(error) {
-      console.error("Failed to fetch categories:", error);
+    } catch(error: unknown) {
+      logDetailedError("Failed to fetch categories", error);
       return [];
     }
 }
@@ -201,8 +205,8 @@ export const updateUserRole = async (userId: number, role: Role, admin: User): P
         await query('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
         logAction(admin, `Updated role for user ID ${userId} to ${role}`, `Admin: ${admin.name}`);
         return await getUserById(userId);
-    } catch (error) {
-        console.error("Failed to update user role:", error);
+    } catch (error: unknown) {
+        logDetailedError("Failed to update user role", error, { userId });
         throw new Error('Database error while updating user role.');
     }
 }
@@ -298,8 +302,8 @@ export const getUserById = async (userId: number): Promise<User | null> => {
             id: Number(user.id),
             assignedTools,
         } as User;
-    } catch (error) {
-        console.error("Failed to fetch user:", error);
+    } catch (error: unknown) {
+        logDetailedError("Failed to fetch user", error, { userId });
         return null;
     }
 }
@@ -330,8 +334,8 @@ export const getUsers = async (): Promise<User[]> => {
       id: Number(user.id),
       assignedTools: userToolsMap[user.id] || []
     })) as User[];
-  } catch (error) {
-    console.error("Failed to fetch users:", error);
+  } catch (error: unknown) {
+    logDetailedError("Failed to fetch users", error);
     return []; // Return an empty array on error to prevent crashes.
   }
 }
@@ -357,9 +361,9 @@ export const assignToolsToUser = async (userId: number, toolIds: number[], admin
             logAction(admin, `Assigned tools to ${updatedUser.name}`, `Tool IDs: ${toolIds.join(', ')}`);
         }
         return updatedUser;
-    } catch (error) {
+    } catch (error: unknown) {
         await query('ROLLBACK', []);
-        console.error("Failed to assign tools to user:", error);
+        logDetailedError("Failed to assign tools to user", error, { userId });
         throw new Error('Database error while assigning tools.');
     }
 }
@@ -370,8 +374,8 @@ export const getAllPermissions = async (): Promise<Permission[]> => {
     try {
       const rows = await query('SELECT * FROM permissions ORDER BY name', []) as any[];
       return rows.map(r => ({ ...r, id: Number(r.id) }));
-    } catch (error) {
-      console.error("Failed to fetch permissions:", error);
+    } catch (error: unknown) {
+      logDetailedError("Failed to fetch permissions", error);
       return [];
     }
 }
@@ -395,8 +399,8 @@ export const getRolePermissions = async (): Promise<Record<Role, string[]>> => {
               rolePermissions[row.role].push(row.permissionName);
           }
       }
-    } catch(error) {
-       console.error("Failed to fetch role permissions:", error);
+    } catch(error: unknown) {
+       logDetailedError("Failed to fetch role permissions", error);
     }
     return rolePermissions;
 }
@@ -417,8 +421,8 @@ export const updateRolePermission = async (role: Role, permissionId: number, has
             await query('DELETE FROM role_permissions WHERE role = ? AND permission_id = ?', [role, permissionId]);
             logAction(admin, `Revoked permission '${permissionName}' from role ${role}`, `Permission ID: ${permissionId}`);
         }
-    } catch (error) {
-        console.error("Failed to update role permission:", error);
+    } catch (error: unknown) {
+        logDetailedError("Failed to update role permission", error, { adminId: admin.id, role, permissionId, permissionName: permissionNameResult[0]?.name });
         throw new Error('Database error while updating permission.');
     }
 }
@@ -449,8 +453,8 @@ export async function registerUser(prevState: { error?: string, success?: boolea
         console.log(`User registered with ID: ${result.insertId}`);
         return { success: true };
 
-    } catch (error) {
-        console.error('Registration error:', error);
+    } catch (error: unknown) {
+        logDetailedError("Registration error", error, { email });
         return { error: 'An internal error occurred. Please try again.' };
     }
 }

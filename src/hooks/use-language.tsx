@@ -1,63 +1,70 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import i18n from 'i18next';
-import { initReactI18next, I18nextProvider } from 'react-i18next';
-import resourcesToBackend from 'i18next-resources-to-backend';
-
-i18n
-  .use(initReactI18next)
-  .use(resourcesToBackend((language: string, namespace: string) => import(`@/locales/${language}/${namespace}.json`)))
-  .init({
-    fallbackLng: 'en',
-    debug: process.env.NODE_ENV === 'development',
-    interpolation: {
-      escapeValue: false, // react already safes from xss
-    },
-    defaultNS: 'common',
-  });
-
-
-type LanguageContextType = {
-  language: 'en' | 'es';
-  setLanguage: (language: 'en' | 'es') => void;
-};
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+import React, { useEffect, useState } from 'react';
+import { I18nextProvider, useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<'en' | 'es'>('en');
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const setLanguage = (lang: 'en' | 'es') => {
-    setLanguageState(lang);
-    i18n.changeLanguage(lang);
-  };
-  
   useEffect(() => {
-    const storedLanguage = localStorage.getItem('language') as 'en' | 'es' | null;
-    if (storedLanguage) {
-      setLanguage(storedLanguage);
+    if (i18n.isInitialized) {
+      setIsInitialized(true);
+    } else {
+      const handleInitialized = () => {
+        setIsInitialized(true);
+      };
+      i18n.on('initialized', handleInitialized);
+      
+      return () => {
+        i18n.off('initialized', handleInitialized);
+      };
     }
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('language', language);
-  }, [language]);
-
+  if (!isInitialized) {
+    return null; // O un componente de carga si lo prefieres
+  }
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
-      <I18nextProvider i18n={i18n}>
-        {children}
-      </I18nextProvider>
-    </LanguageContext.Provider>
+    <I18nextProvider i18n={i18n}>
+      {children}
+    </I18nextProvider>
   );
 };
 
 export const useLanguage = () => {
-  const context = useContext(LanguageContext);
-  if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
+  const { i18n } = useTranslation();
+  
+  // Función para obtener el idioma actual de forma segura
+  const getSafeLanguage = () => {
+    const currentI18nLanguage = i18n.language;
+    if (typeof currentI18nLanguage === 'string') {
+      return currentI18nLanguage.startsWith('es') ? 'es' : 'en';
+    }
+    return 'en'; // Valor predeterminado seguro
+  };
+
+  const [language, setLanguageState] = useState(getSafeLanguage());
+
+  useEffect(() => {
+    const handleLanguageChanged = () => {
+      setLanguageState(getSafeLanguage());
+    };
+
+    i18n.on('languageChanged', handleLanguageChanged);
+    
+    // Asegurarse de que el estado inicial se establezca si i18n ya está inicializado
+    setLanguageState(getSafeLanguage());
+
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]); // Dependencia en i18n para re-suscribirse si la instancia de i18n cambia (raro, pero seguro)
+
+  const setLanguage = (lang: 'en' | 'es') => {
+    i18n.changeLanguage(lang);
+  };
+
+  return { language, setLanguage };
 };

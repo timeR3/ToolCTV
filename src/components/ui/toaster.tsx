@@ -16,12 +16,20 @@ export function Toaster() {
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, ...props }) {
+        const titleId = title ? `toast-title-${id}` : undefined;
+        const descriptionId = description ? `toast-description-${id}` : undefined;
+
         return (
-          <Toast key={id} {...props}>
+          <Toast 
+            key={id} 
+            {...props}
+            {...(titleId && { 'aria-labelledby': titleId })}
+            {...(descriptionId && { 'aria-describedby': descriptionId })}
+          >
             <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
+              {title && <ToastTitle id={titleId}>{title}</ToastTitle>}
               {description && (
-                <ToastDescription>{description}</ToastDescription>
+                <ToastDescription id={descriptionId}>{description}</ToastDescription>
               )}
             </div>
             {action}

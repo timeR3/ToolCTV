@@ -4,6 +4,7 @@
 import 'dotenv/config';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
+import { logDetailedError } from './error-logger';
 
 const secretKey = process.env.AUTH_SECRET;
 if (!secretKey) {
@@ -26,8 +27,8 @@ export async function decrypt(input: string): Promise<any> {
             algorithms: [alg],
         });
         return payload;
-    } catch (e) {
-        console.error('Decryption failed:', e);
+    } catch (e: unknown) {
+        logDetailedError('Session Decryption', e, { attemptedInput: input.substring(0, 50) + '...' });
         return null;
     }
 }
