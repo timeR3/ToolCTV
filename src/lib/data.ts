@@ -38,20 +38,21 @@ export const getTools = async (): Promise<Tool[]> => {
   }
 };
 
-export const addTool = async (tool: Omit<Tool, 'id' | 'category' | 'createdByUser'>, user: User): Promise<Tool> => {
+export const addTool = async (tool: Omit<Tool, 'id' | 'category' | 'createdByUser'> & { category_id: number }, user: User): Promise<Tool> => {
     if (!(await hasPermission(user, 'add_tools'))) {
         throw new Error('You do not have permission to add tools.');
     }
   await sleep(200);
-  const categoryResult = await query('SELECT id FROM categories WHERE name = ?', [tool.category]) as any[];
-    if (categoryResult.length === 0) {
-        throw new Error(`Category not found: ${tool.category}`);
-    }
-  const category_id = categoryResult[0].id;
+  // La lógica de búsqueda de categoría se ha movido al componente cliente.
+  // const categoryResult = await query('SELECT id FROM categories WHERE name = ?', [tool.category]) as any[];
+  //   if (categoryResult.length === 0) {
+  //       throw new Error(`Category not found: ${tool.category}`);
+  //   }
+  // const category_id = categoryResult[0].id;
 
   const result = await query(
     'INSERT INTO tools (name, description, url, icon, iconUrl, enabled, category_id, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [tool.name, tool.description, tool.url, tool.icon, tool.iconUrl, tool.enabled, category_id, user.id]
+    [tool.name, tool.description, tool.url, tool.icon, tool.iconUrl ?? null, tool.enabled, tool.category_id, user.id]
   ) as any;
   const newToolId = result.insertId;
   // logAction uses the imported logDetailedError indirectly now
@@ -395,8 +396,8 @@ export const getRolePermissions = async (): Promise<Record<Role, string[]>> => {
 
 
       for (const row of results) {
-          if (rolePermissions[row.role]) {
-              rolePermissions[row.role].push(row.permissionName);
+          if (rolePermissions[row.role as Role]) {
+              rolePermissions[row.role as Role].push(row.permissionName);
           }
       }
     } catch(error: unknown) {
@@ -412,7 +413,7 @@ export const updateRolePermission = async (role: Role, permissionId: number, has
 
     try {
         const permissionNameResult = await query('SELECT name FROM permissions WHERE id = ?', [permissionId]) as any[];
-        const permissionName = permissionNameResult[0]?.name;
+        const permissionName = permissionNameResult[0]?.name; // Define permissionName here
         
         if (hasPermission) {
             await query('INSERT IGNORE INTO role_permissions (role, permission_id) VALUES (?, ?)', [role, permissionId]);
@@ -422,7 +423,7 @@ export const updateRolePermission = async (role: Role, permissionId: number, has
             logAction(admin, `Revoked permission '${permissionName}' from role ${role}`, `Permission ID: ${permissionId}`);
         }
     } catch (error: unknown) {
-        logDetailedError("Failed to update role permission", error, { adminId: admin.id, role, permissionId, permissionName: permissionNameResult[0]?.name });
+        logDetailedError("Failed to update role permission", error, { adminId: admin.id, role, permissionId, permissionName: permissionName });
         throw new Error('Database error while updating permission.');
     }
 }

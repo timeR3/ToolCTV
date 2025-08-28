@@ -18,23 +18,23 @@ const protectedRoutes = [
 const publicRoutes = ['/login', '/register'];
 
 export async function middleware(request: NextRequest) {
-  const sessionCookie = cookies().get('session')?.value;
+  const sessionCookie = (await cookies()).get('session')?.value;
   const session = sessionCookie ? await decrypt(sessionCookie) : null;
   const { pathname } = request.nextUrl;
 
-  console.log(`Middleware - Pathname: ${pathname}`);
-  console.log(`Middleware - Session Cookie Found: ${!!sessionCookie}`);
+  console.log(`[Middleware] Pathname: ${pathname}`);
+  console.log(`[Middleware] Session Cookie Found: ${!!sessionCookie}`);
   if (sessionCookie) {
-    console.log(`Middleware - Session Cookie Value (first 20 chars): ${sessionCookie.substring(0, 20)}...`);
+    console.log(`[Middleware] Session Cookie Value (first 20 chars): ${sessionCookie.substring(0, 20)}...`);
   }
-  console.log(`Middleware - Session Decrypted (userId): ${session?.userId || 'None'}`);
-  console.log(`Middleware - Is Protected Route: ${protectedRoutes.some(route => pathname === '/' || (route !== '/' && pathname.startsWith(route)))}`);
-
-  const isProtectedRoute = protectedRoutes.some(route => pathname === '/' || (route !== '/' && pathname.startsWith(route)));
+  console.log(`[Middleware] Session Decrypted (userId): ${session?.userId || 'None'}`);
   
+  const isProtectedRoute = protectedRoutes.some(route => pathname === '/' || (route !== '/' && pathname.startsWith(route)));
+  console.log(`[Middleware] Is Protected Route: ${isProtectedRoute}`);
+
   // If the user is trying to access a protected route without a valid session, redirect to login.
   if (isProtectedRoute && (!session || !session.userId)) {
-    console.log('Middleware - Redirecting to login: Protected route without valid session.');
+    console.log('[Middleware] Redirecting to login: Protected route without valid session.');
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     const response = NextResponse.redirect(url);
@@ -45,11 +45,12 @@ export async function middleware(request: NextRequest) {
 
   // If the user is logged in and tries to access a public route (like login), redirect to the dashboard.
   if (session && session.userId && publicRoutes.includes(pathname)) {
-    console.log('Middleware - Redirecting to dashboard: Logged in user accessing public route.');
+    console.log('[Middleware] Redirecting to dashboard: Logged in user accessing public route.');
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
   }
+  console.log('[Middleware] Proceeding to next request.');
 
   return NextResponse.next();
 }

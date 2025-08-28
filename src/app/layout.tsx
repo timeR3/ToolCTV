@@ -91,8 +91,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getCurrentUser();
+  console.log('[RootLayout] User:', user ? user.email : 'None');
 
   if (!user) {
+    console.log('[RootLayout] No user, rendering children without full layout.');
     return (
         <html lang="en" suppressHydrationWarning>
             <body className="font-body antialiased">
@@ -111,6 +113,7 @@ export default async function RootLayout({
         </html>
     )
   }
+  console.log('[RootLayout] User found, rendering full layout.');
 
   return (
     <html lang="en" suppressHydrationWarning>

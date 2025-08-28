@@ -36,6 +36,11 @@ interface ManageUsersClientProps {
   initialUsers: User[];
   currentUser: User;
   allTools: Tool[];
+  permissions: {
+    canEditUsers: boolean;
+    canChangeRoles: boolean;
+    canAssignTools: boolean;
+  };
 }
 
 const roleColors: Record<Role, "default" | "secondary" | "destructive"> = {
@@ -44,7 +49,7 @@ const roleColors: Record<Role, "default" | "secondary" | "destructive"> = {
     Superadmin: "destructive"
 }
 
-export function ManageUsersClient({ initialUsers, currentUser, allTools }: ManageUsersClientProps) {
+export function ManageUsersClient({ initialUsers, currentUser, allTools, permissions }: ManageUsersClientProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [assignedTools, setAssignedTools] = useState<number[]>([]);
@@ -56,6 +61,8 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
   const [currentUserToEdit, setCurrentUserToEdit] = useState<Partial<User>>({});
   const [newPassword, setNewPassword] = useState("");
   const { toast } = useToast();
+
+  const { canEditUsers, canChangeRoles, canAssignTools } = permissions;
 
   const handleSelectUser = (user: User) => {
     if (user.role === 'Superadmin' && currentUser.role !== 'Superadmin') {
@@ -136,8 +143,8 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
   }
   
   const handleToolToggle = (toolId: number) => {
-    setAssignedTools(prev => 
-      prev.includes(toolId) 
+    setAssignedTools(prev =>
+      prev.includes(toolId)
         ? prev.filter(id => id !== toolId)
         : [...prev, toolId]
     );
@@ -177,9 +184,9 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
 
   const enabledTools = allTools.filter(tool => tool.enabled);
   
-  const canEditUsers = hasPermission(currentUser, 'edit_any_user');
-  const canChangeRoles = hasPermission(currentUser, 'change_user_roles');
-  const canAssignTools = hasPermission(currentUser, 'assign_tools');
+  // const canEditUsers = hasPermission(currentUser, 'edit_any_user'); // Removed
+  // const canChangeRoles = hasPermission(currentUser, 'change_user_roles'); // Removed
+  // const canAssignTools = hasPermission(currentUser, 'assign_tools'); // Removed
 
 
   return (
@@ -202,7 +209,7 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                 </TableHeader>
                 <TableBody>
                     {users.map((user) => (
-                    <TableRow 
+                    <TableRow
                         key={user.id}
                         onClick={() => handleSelectUser(user)}
                         className={cn(
@@ -236,7 +243,6 @@ export function ManageUsersClient({ initialUsers, currentUser, allTools }: Manag
                                 <Users className="h-4 w-4" />
                             </Button>
                           </>
-                        )}
                         </TableCell>
                     </TableRow>
                     ))}

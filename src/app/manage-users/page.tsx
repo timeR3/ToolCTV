@@ -17,13 +17,23 @@ export default async function ManageUsersPage() {
   const users = await getUsers();
   const tools = await getTools();
 
+  // Fetch permissions in the Server Component
+  const canEditUsers = await hasPermission(user, 'edit_any_user');
+  const canChangeRoles = await hasPermission(user, 'change_user_roles');
+  const canAssignTools = await hasPermission(user, 'assign_tools');
+
   return (
     <div>
       <PageHeader
         title="Manage Users & Tools"
         description="Manage user roles and assign tools to them."
       />
-      <ManageUsersClient initialUsers={users} currentUser={user} allTools={tools} />
+      <ManageUsersClient
+        initialUsers={users}
+        currentUser={user}
+        allTools={tools}
+        permissions={{ canEditUsers, canChangeRoles, canAssignTools }}
+      />
     </div>
   );
 }

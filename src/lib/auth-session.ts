@@ -14,27 +14,36 @@ const secret = new TextEncoder().encode(secretKey);
 const alg = 'HS256';
 
 export async function encrypt(payload: any) {
-  return await new jose.SignJWT(payload)
+  console.log('Encrypting payload:', payload);
+  const token = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg })
     .setIssuedAt()
     .setExpirationTime('24h')
     .sign(secret);
+  console.log('Encrypted token (first 20 chars):', token.substring(0, 20) + '...');
+  return token;
 }
 
 export async function decrypt(input: string): Promise<any> {
+    console.log('Attempting to decrypt input (first 20 chars):', input.substring(0, 20) + '...');
     try {
         const { payload } = await jose.jwtVerify(input, secret, {
             algorithms: [alg],
         });
+        console.log('Decryption successful, payload:', payload);
         return payload;
     } catch (e: unknown) {
         logDetailedError('Session Decryption', e, { attemptedInput: input.substring(0, 50) + '...' });
+        console.error('Decryption failed:', e);
         return null;
     }
 }
 
 export async function getSession() {
-    const sessionCookie = cookies().get('session')?.value;
+    const sessionCookie = (await cookies()).get('session')?.value;
+    console.log('getSession - Session Cookie Found:', !!sessionCookie);
     if (!sessionCookie) return null;
-    return await decrypt(sessionCookie);
+    const session = await decrypt(sessionCookie);
+    console.log('getSession - Decrypted Session (userId):', session?.userId || 'None');
+    return session;
 }

@@ -154,7 +154,8 @@ export function ManageToolsClient({ initialTools, user }: ManageToolsClientProps
             icon: currentTool.icon || "Wrench",
             iconUrl: currentTool.iconUrl,
             enabled: currentTool.enabled ?? false,
-            category_id: selectedCategory.id
+            category_id: selectedCategory.id,
+            created_by_user_id: user.id, // Añadimos created_by_user_id
         }, user);
         const newTools = await getTools(); // Re-fetch to get the full new tool object
         setTools(newTools);

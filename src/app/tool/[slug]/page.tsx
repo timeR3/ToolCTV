@@ -17,7 +17,7 @@ export default async function ToolPage({ params }: { params: { slug: string } })
   }
   
   const tools = await getTools();
-  const toolId = parseInt(params.slug, 10);
+  const toolId = parseInt(await params.slug, 10);
   const tool = tools.find((t) => t.id === toolId);
 
   if (!tool || isNaN(toolId)) {

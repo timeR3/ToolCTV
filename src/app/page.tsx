@@ -6,12 +6,15 @@ import type { Tool, User } from '@/types';
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
+  console.log('[DashboardPage] User:', user ? user.email : 'None');
 
   if (!user) {
+    console.log('[DashboardPage] No user, redirecting to /login.');
     // Although middleware should handle this, it's good practice
     // to have a safeguard in server components.
     redirect('/login');
   }
+  console.log('[DashboardPage] User found, rendering DashboardClient.');
 
   await logUserAccess(user, "User dashboard loaded");
   const allTools = await getTools();

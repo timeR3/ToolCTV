@@ -10,22 +10,28 @@ import { encrypt, getSession } from './auth-session';
 import { logDetailedError } from './error-logger'; // Import the new logger
 
 export async function getCurrentUser(): Promise<User | null> {
+  console.log('[auth-db] getCurrentUser - Attempting to get session.');
   const session = await getSession();
   if (!session?.userId) {
+    console.log('[auth-db] getCurrentUser - No session or userId found.');
     return null;
   }
+  console.log(`[auth-db] getCurrentUser - Session found for userId: ${session.userId}`);
   
   try {
     const rows = await query("SELECT id, name, email, avatar, role FROM users WHERE id = ?", [session.userId]) as any[];
     if (rows.length === 0) {
+        console.log(`[auth-db] getCurrentUser - User with ID ${session.userId} not found in DB.`);
         // This case might happen if the user was deleted but the session still exists.
         // The middleware should ideally handle redirecting to login.
         return null;
     }
     const userRow = rows[0];
+    console.log(`[auth-db] getCurrentUser - User found: ${userRow.email}, Role: ${userRow.role}`);
     
     const assignedToolsResult = await query('SELECT tool_id FROM user_tools WHERE user_id = ?', [userRow.id]) as any[];
     const assignedTools = assignedToolsResult.map((row: any) => Number(row.tool_id));
+    console.log(`[auth-db] getCurrentUser - Assigned tools for user ${userRow.id}:`, assignedTools);
     
     return {
       ...userRow,
@@ -35,6 +41,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
   } catch (error: unknown) {
     logDetailedError("Fetching Current User", error, { userId: session.userId });
+    console.error('[auth-db] getCurrentUser - Error fetching user:', error);
     return null;
   }
 }
@@ -89,8 +96,8 @@ export async function login(prevState: { error: string } | undefined, formData: 
         const session = await encrypt({ userId: user.id, expires });
 
         // Save session in a cookie
-        cookies().set('session', session, {
-          expires, 
+        (await cookies()).set('session', session, {
+          expires,
           httpOnly: true,
           path: '/',
           secure: process.env.NODE_ENV === 'production', // Usar `secure` solo en producción
@@ -110,6 +117,6 @@ export async function login(prevState: { error: string } | undefined, formData: 
 }
 
 export async function logout() {
-    cookies().set('session', '', { expires: new Date(0), path: '/' });
+    (await cookies()).set('session', '', { expires: new Date(0), path: '/' });
     redirect('/login');
 }
